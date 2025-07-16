@@ -1,0 +1,17 @@
+<h3>Rules for {{ clientCn }}</h3>
+
+<ul>
+  <li *ngFor="let rule of rules">
+    {{ rule.protocol }} : {{ rule.dstPort }}
+    <button (click)="removeRule(rule)">Remove</button>
+  </li>
+</ul>
+
+<div>
+  <input type="number" [(ngModel)]="newPort" placeholder="Port" />
+  <select [(ngModel)]="newProtocol">
+    <option value="tcp">TCP</option>
+    <option value="udp">UDP</option>
+  </select>
+  <button (click)="addRule()">Add Rule</button>
+</div>

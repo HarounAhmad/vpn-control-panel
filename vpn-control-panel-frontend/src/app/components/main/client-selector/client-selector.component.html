@@ -1,0 +1,7 @@
+<select [(ngModel)]="selectedClient">
+  <option *ngFor="let client of clients" [value]="client" >
+    {{ client.cn }}
+  </option>
+</select>
+
+<app-client-rules [clientCn]="selectedClient.cn"></app-client-rules>
