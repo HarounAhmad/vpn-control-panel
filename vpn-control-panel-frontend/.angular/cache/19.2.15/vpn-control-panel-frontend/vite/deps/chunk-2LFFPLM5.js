@@ -3,31 +3,38 @@ import {
   XhrFactory,
   isPlatformServer,
   parseCookieValue
-} from "./chunk-LJGW4UUE.js";
+} from "./chunk-FRXTEGWH.js";
 import {
   APP_BOOTSTRAP_LISTENER,
   ApplicationRef,
   Console,
+  DestroyRef,
   EnvironmentInjector,
   Inject,
   Injectable,
   InjectionToken,
+  Injector,
   NgModule,
   NgZone,
   Observable,
   PLATFORM_ID,
-  PendingTasks,
+  PendingTasksInternal,
+  ResourceImpl,
+  ResourceStatus,
   RuntimeError,
   TransferState,
   __async,
   __objRest,
   __spreadValues,
+  assertInInjectionContext,
+  computed,
   concatMap,
   filter,
   finalize,
   formatRuntimeError,
   from,
   inject,
+  linkedSignal,
   makeEnvironmentProviders,
   makeStateKey,
   map,
@@ -35,26 +42,41 @@ import {
   performanceMarkFeature,
   runInInjectionContext,
   setClassMetadata,
+  signal,
   switchMap,
   tap,
   truncateMiddle,
-  whenStable,
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule,
   ɵɵinject
-} from "./chunk-VKUFYADX.js";
+} from "./chunk-LKBYGJ3F.js";
 
-// node_modules/@angular/common/fesm2022/http.mjs
+// node_modules/@angular/common/fesm2022/module-z3bvLlVg.mjs
 var HttpHandler = class {
 };
 var HttpBackend = class {
 };
 var HttpHeaders = class _HttpHeaders {
+  /**
+   * Internal map of lowercase header names to values.
+   */
+  headers;
+  /**
+   * Internal map of lowercased header names to the normalized
+   * form of the name (the form seen first).
+   */
+  normalizedNames = /* @__PURE__ */ new Map();
+  /**
+   * Complete the lazy initialization of this object (needed before reading).
+   */
+  lazyInit;
+  /**
+   * Queued updates to be materialized the next initialization.
+   */
+  lazyUpdate = null;
   /**  Constructs a new HTTP header object with the given values.*/
   constructor(headers) {
-    this.normalizedNames = /* @__PURE__ */ new Map();
-    this.lazyUpdate = null;
     if (!headers) {
       this.headers = /* @__PURE__ */ new Map();
     } else if (typeof headers === "string") {
@@ -64,21 +86,15 @@ var HttpHeaders = class _HttpHeaders {
           const index = line.indexOf(":");
           if (index > 0) {
             const name = line.slice(0, index);
-            const key = name.toLowerCase();
             const value = line.slice(index + 1).trim();
-            this.maybeSetNormalizedName(name, key);
-            if (this.headers.has(key)) {
-              this.headers.get(key).push(value);
-            } else {
-              this.headers.set(key, [value]);
-            }
+            this.addHeaderEntry(name, value);
           }
         });
       };
     } else if (typeof Headers !== "undefined" && headers instanceof Headers) {
       this.headers = /* @__PURE__ */ new Map();
-      headers.forEach((values, name) => {
-        this.setHeaderEntries(name, values);
+      headers.forEach((value, name) => {
+        this.addHeaderEntry(name, value);
       });
     } else {
       this.lazyInit = () => {
@@ -253,6 +269,15 @@ var HttpHeaders = class _HttpHeaders {
         break;
     }
   }
+  addHeaderEntry(name, value) {
+    const key = name.toLowerCase();
+    this.maybeSetNormalizedName(name, key);
+    if (this.headers.has(key)) {
+      this.headers.get(key).push(value);
+    } else {
+      this.headers.set(key, [value]);
+    }
+  }
   setHeaderEntries(name, values) {
     const headerValues = (Array.isArray(values) ? values : [values]).map((value) => value.toString());
     const key = name.toLowerCase();
@@ -340,13 +365,15 @@ function valueToString(value) {
   return `${value}`;
 }
 var HttpParams = class _HttpParams {
+  map;
+  encoder;
+  updates = null;
+  cloneFrom = null;
   constructor(options = {}) {
-    this.updates = null;
-    this.cloneFrom = null;
     this.encoder = options.encoder || new HttpUrlEncodingCodec();
-    if (!!options.fromString) {
-      if (!!options.fromObject) {
-        throw new Error(`Cannot specify both fromString and fromObject.`);
+    if (options.fromString) {
+      if (options.fromObject) {
+        throw new RuntimeError(2805, ngDevMode && "Cannot specify both fromString and fromObject.");
       }
       this.map = paramParser(options.fromString, this.encoder);
     } else if (!!options.fromObject) {
@@ -523,14 +550,13 @@ var HttpParams = class _HttpParams {
   }
 };
 var HttpContextToken = class {
+  defaultValue;
   constructor(defaultValue) {
     this.defaultValue = defaultValue;
   }
 };
 var HttpContext = class {
-  constructor() {
-    this.map = /* @__PURE__ */ new Map();
-  }
+  map = /* @__PURE__ */ new Map();
   /**
    * Store a value in the context. If a value is already present it will be overwritten.
    *
@@ -608,13 +634,75 @@ function isFormData(value) {
 function isUrlSearchParams(value) {
   return typeof URLSearchParams !== "undefined" && value instanceof URLSearchParams;
 }
+var CONTENT_TYPE_HEADER = "Content-Type";
+var ACCEPT_HEADER = "Accept";
+var X_REQUEST_URL_HEADER = "X-Request-URL";
+var TEXT_CONTENT_TYPE = "text/plain";
+var JSON_CONTENT_TYPE = "application/json";
+var ACCEPT_HEADER_VALUE = `${JSON_CONTENT_TYPE}, ${TEXT_CONTENT_TYPE}, */*`;
 var HttpRequest = class _HttpRequest {
+  url;
+  /**
+   * The request body, or `null` if one isn't set.
+   *
+   * Bodies are not enforced to be immutable, as they can include a reference to any
+   * user-defined data type. However, interceptors should take care to preserve
+   * idempotence by treating them as such.
+   */
+  body = null;
+  /**
+   * Outgoing headers for this request.
+   */
+  headers;
+  /**
+   * Shared and mutable context that can be used by interceptors
+   */
+  context;
+  /**
+   * Whether this request should be made in a way that exposes progress events.
+   *
+   * Progress events are expensive (change detection runs on each event) and so
+   * they should only be requested if the consumer intends to monitor them.
+   *
+   * Note: The `FetchBackend` doesn't support progress report on uploads.
+   */
+  reportProgress = false;
+  /**
+   * Whether this request should be sent with outgoing credentials (cookies).
+   */
+  withCredentials = false;
+  /**
+   * The expected response type of the server.
+   *
+   * This is used to parse the response appropriately before returning it to
+   * the requestee.
+   */
+  responseType = "json";
+  /**
+   * The outgoing HTTP request method.
+   */
+  method;
+  /**
+   * Outgoing URL parameters.
+   *
+   * To pass a string representation of HTTP parameters in the URL-query-string format,
+   * the `HttpParamsOptions`' `fromString` may be used. For example:
+   *
+   * ```ts
+   * new HttpParams({fromString: 'angular=awesome'})
+   * ```
+   */
+  params;
+  /**
+   * The outgoing URL with all URL parameters set.
+   */
+  urlWithParams;
+  /**
+   * The HttpTransferCache option for the request
+   */
+  transferCache;
   constructor(method, url, third, fourth) {
     this.url = url;
-    this.body = null;
-    this.reportProgress = false;
-    this.withCredentials = false;
-    this.responseType = "json";
     this.method = method.toUpperCase();
     let options;
     if (mightHaveBody(this.method) || !!fourth) {
@@ -695,13 +783,13 @@ var HttpRequest = class _HttpRequest {
       return null;
     }
     if (typeof this.body === "string") {
-      return "text/plain";
+      return TEXT_CONTENT_TYPE;
     }
     if (this.body instanceof HttpParams) {
       return "application/x-www-form-urlencoded;charset=UTF-8";
     }
     if (typeof this.body === "object" || typeof this.body === "number" || typeof this.body === "boolean") {
-      return "application/json";
+      return JSON_CONTENT_TYPE;
     }
     return null;
   }
@@ -744,6 +832,32 @@ var HttpEventType;
 })(HttpEventType || (HttpEventType = {}));
 var HttpResponseBase = class {
   /**
+   * All response headers.
+   */
+  headers;
+  /**
+   * Response status code.
+   */
+  status;
+  /**
+   * Textual description of response status code, defaults to OK.
+   *
+   * Do not depend on this.
+   */
+  statusText;
+  /**
+   * URL of the resource retrieved, or null if not available.
+   */
+  url;
+  /**
+   * Whether the status code falls in the 2xx range.
+   */
+  ok;
+  /**
+   * Type of the response, narrowed to either the full response or the header.
+   */
+  type;
+  /**
    * Super-constructor for all responses.
    *
    * The single parameter accepted is an initialization hash. Any properties
@@ -763,8 +877,8 @@ var HttpHeaderResponse = class _HttpHeaderResponse extends HttpResponseBase {
    */
   constructor(init = {}) {
     super(init);
-    this.type = HttpEventType.ResponseHeader;
   }
+  type = HttpEventType.ResponseHeader;
   /**
    * Copy this `HttpHeaderResponse`, overriding its contents with the
    * given parameter hash.
@@ -780,13 +894,17 @@ var HttpHeaderResponse = class _HttpHeaderResponse extends HttpResponseBase {
 };
 var HttpResponse = class _HttpResponse extends HttpResponseBase {
   /**
+   * The response body, or `null` if one was not returned.
+   */
+  body;
+  /**
    * Construct a new `HttpResponse`.
    */
   constructor(init = {}) {
     super(init);
-    this.type = HttpEventType.Response;
     this.body = init.body !== void 0 ? init.body : null;
   }
+  type = HttpEventType.Response;
   clone(update = {}) {
     return new _HttpResponse({
       body: update.body !== void 0 ? update.body : this.body,
@@ -798,10 +916,15 @@ var HttpResponse = class _HttpResponse extends HttpResponseBase {
   }
 };
 var HttpErrorResponse = class extends HttpResponseBase {
+  name = "HttpErrorResponse";
+  message;
+  error;
+  /**
+   * Errors are never okay, even when the status code is in the 2xx success range.
+   */
+  ok = false;
   constructor(init) {
     super(init, 0, "Unknown Error");
-    this.name = "HttpErrorResponse";
-    this.ok = false;
     if (this.status >= 200 && this.status < 300) {
       this.message = `Http failure during parsing for ${init.url || "(unknown url)"}`;
     } else {
@@ -892,6 +1015,7 @@ function addBody(options, body) {
   };
 }
 var HttpClient = class _HttpClient {
+  handler;
   constructor(handler) {
     this.handler = handler;
   }
@@ -964,21 +1088,21 @@ var HttpClient = class _HttpClient {
           case "arraybuffer":
             return res$.pipe(map((res) => {
               if (res.body !== null && !(res.body instanceof ArrayBuffer)) {
-                throw new Error("Response is not an ArrayBuffer.");
+                throw new RuntimeError(2806, ngDevMode && "Response is not an ArrayBuffer.");
               }
               return res.body;
             }));
           case "blob":
             return res$.pipe(map((res) => {
               if (res.body !== null && !(res.body instanceof Blob)) {
-                throw new Error("Response is not a Blob.");
+                throw new RuntimeError(2807, ngDevMode && "Response is not a Blob.");
               }
               return res.body;
             }));
           case "text":
             return res$.pipe(map((res) => {
               if (res.body !== null && typeof res.body !== "string") {
-                throw new Error("Response is not a string.");
+                throw new RuntimeError(2808, ngDevMode && "Response is not a string.");
               }
               return res.body;
             }));
@@ -989,7 +1113,7 @@ var HttpClient = class _HttpClient {
       case "response":
         return res$;
       default:
-        throw new Error(`Unreachable: unhandled observe type ${options.observe}}`);
+        throw new RuntimeError(2809, ngDevMode && `Unreachable: unhandled observe type ${options.observe}}`);
     }
   }
   /**
@@ -1083,17 +1207,13 @@ var HttpClient = class _HttpClient {
   put(url, body, options = {}) {
     return this.request("PUT", url, addBody(options, body));
   }
-  static {
-    this.ɵfac = function HttpClient_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpClient)(ɵɵinject(HttpHandler));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _HttpClient,
-      factory: _HttpClient.ɵfac
-    });
-  }
+  static ɵfac = function HttpClient_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpClient)(ɵɵinject(HttpHandler));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpClient,
+    factory: _HttpClient.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpClient, [{
@@ -1103,20 +1223,28 @@ var HttpClient = class _HttpClient {
   }], null);
 })();
 var XSSI_PREFIX$1 = /^\)\]\}',?\n/;
-var REQUEST_URL_HEADER = `X-Request-URL`;
 function getResponseUrl$1(response) {
   if (response.url) {
     return response.url;
   }
-  const xRequestUrl = REQUEST_URL_HEADER.toLocaleLowerCase();
+  const xRequestUrl = X_REQUEST_URL_HEADER.toLocaleLowerCase();
   return response.headers.get(xRequestUrl);
 }
+var FETCH_BACKEND = new InjectionToken(typeof ngDevMode === "undefined" || ngDevMode ? "FETCH_BACKEND" : "");
 var FetchBackend = class _FetchBackend {
+  // We use an arrow function to always reference the current global implementation of `fetch`.
+  // This is helpful for cases when the global `fetch` implementation is modified by external code,
+  // see https://github.com/angular/angular/issues/57527.
+  fetchImpl = inject(FetchFactory, {
+    optional: true
+  })?.fetch ?? ((...args) => globalThis.fetch(...args));
+  ngZone = inject(NgZone);
+  destroyRef = inject(DestroyRef);
+  destroyed = false;
   constructor() {
-    this.fetchImpl = inject(FetchFactory, {
-      optional: true
-    })?.fetch ?? ((...args) => globalThis.fetch(...args));
-    this.ngZone = inject(NgZone);
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+    });
   }
   handle(request) {
     return new Observable((observer) => {
@@ -1127,13 +1255,13 @@ var FetchBackend = class _FetchBackend {
       return () => aborter.abort();
     });
   }
-  doRequest(request, signal, observer) {
+  doRequest(request, signal2, observer) {
     return __async(this, null, function* () {
       const init = this.createRequestInit(request);
       let response;
       try {
         const fetchPromise = this.ngZone.runOutsideAngular(() => this.fetchImpl(request.urlWithParams, __spreadValues({
-          signal
+          signal: signal2
         }, init)));
         silenceSuperfluousUnhandledPromiseRejection(fetchPromise);
         observer.next({
@@ -1171,8 +1299,14 @@ var FetchBackend = class _FetchBackend {
         let decoder;
         let partialText;
         const reqZone = typeof Zone !== "undefined" && Zone.current;
+        let canceled = false;
         yield this.ngZone.runOutsideAngular(() => __async(this, null, function* () {
           while (true) {
+            if (this.destroyed) {
+              yield reader.cancel();
+              canceled = true;
+              break;
+            }
             const {
               done,
               value
@@ -1196,9 +1330,13 @@ var FetchBackend = class _FetchBackend {
             }
           }
         }));
+        if (canceled) {
+          observer.complete();
+          return;
+        }
         const chunksAll = this.concatChunks(chunks, receivedLength);
         try {
-          const contentType = response.headers.get("Content-Type") ?? "";
+          const contentType = response.headers.get(CONTENT_TYPE_HEADER) ?? "";
           body = this.parseBody(request, chunksAll, contentType);
         } catch (error) {
           observer.error(new HttpErrorResponse({
@@ -1254,13 +1392,13 @@ var FetchBackend = class _FetchBackend {
     const headers = {};
     const credentials = req.withCredentials ? "include" : void 0;
     req.headers.forEach((name, values) => headers[name] = values.join(","));
-    if (!req.headers.has("Accept")) {
-      headers["Accept"] = "application/json, text/plain, */*";
+    if (!req.headers.has(ACCEPT_HEADER)) {
+      headers[ACCEPT_HEADER] = ACCEPT_HEADER_VALUE;
     }
-    if (!req.headers.has("Content-Type")) {
+    if (!req.headers.has(CONTENT_TYPE_HEADER)) {
       const detectedType = req.detectContentTypeHeader();
       if (detectedType !== null) {
-        headers["Content-Type"] = detectedType;
+        headers[CONTENT_TYPE_HEADER] = detectedType;
       }
     }
     return {
@@ -1279,22 +1417,18 @@ var FetchBackend = class _FetchBackend {
     }
     return chunksAll;
   }
-  static {
-    this.ɵfac = function FetchBackend_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _FetchBackend)();
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _FetchBackend,
-      factory: _FetchBackend.ɵfac
-    });
-  }
+  static ɵfac = function FetchBackend_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _FetchBackend)();
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _FetchBackend,
+    factory: _FetchBackend.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(FetchBackend, [{
     type: Injectable
-  }], null, null);
+  }], () => [], null);
 })();
 var FetchFactory = class {
 };
@@ -1330,7 +1464,7 @@ function legacyInterceptorFnFactory() {
       }) ?? [];
       chain = interceptors.reduceRight(adaptLegacyInterceptorToChain, interceptorChainEndFn);
     }
-    const pendingTasks = inject(PendingTasks);
+    const pendingTasks = inject(PendingTasksInternal);
     const contributeToStability = inject(REQUESTS_CONTRIBUTE_TO_STABILITY);
     if (contributeToStability) {
       const taskId = pendingTasks.add();
@@ -1342,16 +1476,19 @@ function legacyInterceptorFnFactory() {
 }
 var fetchBackendWarningDisplayed = false;
 var HttpInterceptorHandler = class _HttpInterceptorHandler extends HttpHandler {
+  backend;
+  injector;
+  chain = null;
+  pendingTasks = inject(PendingTasksInternal);
+  contributeToStability = inject(REQUESTS_CONTRIBUTE_TO_STABILITY);
   constructor(backend, injector) {
     super();
     this.backend = backend;
     this.injector = injector;
-    this.chain = null;
-    this.pendingTasks = inject(PendingTasks);
-    this.contributeToStability = inject(REQUESTS_CONTRIBUTE_TO_STABILITY);
     if ((typeof ngDevMode === "undefined" || ngDevMode) && !fetchBackendWarningDisplayed) {
       const isServer = isPlatformServer(injector.get(PLATFORM_ID));
-      if (isServer && !(this.backend instanceof FetchBackend)) {
+      const isTestingBackend = this.backend.isTestingBackend;
+      if (isServer && !(this.backend instanceof FetchBackend) && !isTestingBackend) {
         fetchBackendWarningDisplayed = true;
         injector.get(Console).warn(formatRuntimeError(2801, "Angular detected that `HttpClient` is not configured to use `fetch` APIs. It's strongly recommended to enable `fetch` for applications that use Server-Side Rendering for better performance and compatibility. To enable `fetch`, add the `withFetch()` to the `provideHttpClient()` call at the root of the application."));
       }
@@ -1369,17 +1506,13 @@ var HttpInterceptorHandler = class _HttpInterceptorHandler extends HttpHandler {
       return this.chain(initialRequest, (downstreamRequest) => this.backend.handle(downstreamRequest));
     }
   }
-  static {
-    this.ɵfac = function HttpInterceptorHandler_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpInterceptorHandler)(ɵɵinject(HttpBackend), ɵɵinject(EnvironmentInjector));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _HttpInterceptorHandler,
-      factory: _HttpInterceptorHandler.ɵfac
-    });
-  }
+  static ɵfac = function HttpInterceptorHandler_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpInterceptorHandler)(ɵɵinject(HttpBackend), ɵɵinject(EnvironmentInjector));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpInterceptorHandler,
+    factory: _HttpInterceptorHandler.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpInterceptorHandler, [{
@@ -1405,10 +1538,15 @@ function jsonpCallbackContext() {
   return {};
 }
 var JsonpClientBackend = class _JsonpClientBackend {
+  callbackMap;
+  document;
+  /**
+   * A resolved promise that can be used to schedule microtasks in the event handlers.
+   */
+  resolvedPromise = Promise.resolve();
   constructor(callbackMap, document) {
     this.callbackMap = callbackMap;
     this.document = document;
-    this.resolvedPromise = Promise.resolve();
   }
   /**
    * Get the name of the next callback method, by incrementing the global `nextRequestId`.
@@ -1497,17 +1635,13 @@ var JsonpClientBackend = class _JsonpClientBackend {
     foreignDocument ??= this.document.implementation.createHTMLDocument();
     foreignDocument.adoptNode(script);
   }
-  static {
-    this.ɵfac = function JsonpClientBackend_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _JsonpClientBackend)(ɵɵinject(JsonpCallbackContext), ɵɵinject(DOCUMENT));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _JsonpClientBackend,
-      factory: _JsonpClientBackend.ɵfac
-    });
-  }
+  static ɵfac = function JsonpClientBackend_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _JsonpClientBackend)(ɵɵinject(JsonpCallbackContext), ɵɵinject(DOCUMENT));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _JsonpClientBackend,
+    factory: _JsonpClientBackend.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(JsonpClientBackend, [{
@@ -1529,6 +1663,7 @@ function jsonpInterceptorFn(req, next) {
   return next(req);
 }
 var JsonpInterceptor = class _JsonpInterceptor {
+  injector;
   constructor(injector) {
     this.injector = injector;
   }
@@ -1542,17 +1677,13 @@ var JsonpInterceptor = class _JsonpInterceptor {
   intercept(initialRequest, next) {
     return runInInjectionContext(this.injector, () => jsonpInterceptorFn(initialRequest, (downstreamRequest) => next.handle(downstreamRequest)));
   }
-  static {
-    this.ɵfac = function JsonpInterceptor_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _JsonpInterceptor)(ɵɵinject(EnvironmentInjector));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _JsonpInterceptor,
-      factory: _JsonpInterceptor.ɵfac
-    });
-  }
+  static ɵfac = function JsonpInterceptor_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _JsonpInterceptor)(ɵɵinject(EnvironmentInjector));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _JsonpInterceptor,
+    factory: _JsonpInterceptor.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(JsonpInterceptor, [{
@@ -1562,16 +1693,18 @@ var JsonpInterceptor = class _JsonpInterceptor {
   }], null);
 })();
 var XSSI_PREFIX = /^\)\]\}',?\n/;
+var X_REQUEST_URL_REGEXP = RegExp(`^${X_REQUEST_URL_HEADER}:`, "m");
 function getResponseUrl(xhr) {
   if ("responseURL" in xhr && xhr.responseURL) {
     return xhr.responseURL;
   }
-  if (/^X-Request-URL:/m.test(xhr.getAllResponseHeaders())) {
-    return xhr.getResponseHeader("X-Request-URL");
+  if (X_REQUEST_URL_REGEXP.test(xhr.getAllResponseHeaders())) {
+    return xhr.getResponseHeader(X_REQUEST_URL_HEADER);
   }
   return null;
 }
 var HttpXhrBackend = class _HttpXhrBackend {
+  xhrFactory;
   constructor(xhrFactory) {
     this.xhrFactory = xhrFactory;
   }
@@ -1594,13 +1727,13 @@ var HttpXhrBackend = class _HttpXhrBackend {
           xhr.withCredentials = true;
         }
         req.headers.forEach((name, values) => xhr.setRequestHeader(name, values.join(",")));
-        if (!req.headers.has("Accept")) {
-          xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
+        if (!req.headers.has(ACCEPT_HEADER)) {
+          xhr.setRequestHeader(ACCEPT_HEADER, ACCEPT_HEADER_VALUE);
         }
-        if (!req.headers.has("Content-Type")) {
+        if (!req.headers.has(CONTENT_TYPE_HEADER)) {
           const detectedType = req.detectContentTypeHeader();
           if (detectedType !== null) {
-            xhr.setRequestHeader("Content-Type", detectedType);
+            xhr.setRequestHeader(CONTENT_TYPE_HEADER, detectedType);
           }
         }
         if (req.responseType) {
@@ -1747,17 +1880,13 @@ var HttpXhrBackend = class _HttpXhrBackend {
       });
     }));
   }
-  static {
-    this.ɵfac = function HttpXhrBackend_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpXhrBackend)(ɵɵinject(XhrFactory));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _HttpXhrBackend,
-      factory: _HttpXhrBackend.ɵfac
-    });
-  }
+  static ɵfac = function HttpXhrBackend_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpXhrBackend)(ɵɵinject(XhrFactory));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpXhrBackend,
+    factory: _HttpXhrBackend.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXhrBackend, [{
@@ -1780,16 +1909,20 @@ var XSRF_HEADER_NAME = new InjectionToken(ngDevMode ? "XSRF_HEADER_NAME" : "", {
 var HttpXsrfTokenExtractor = class {
 };
 var HttpXsrfCookieExtractor = class _HttpXsrfCookieExtractor {
-  constructor(doc, platform, cookieName) {
+  doc;
+  cookieName;
+  lastCookieString = "";
+  lastToken = null;
+  /**
+   * @internal for testing
+   */
+  parseCount = 0;
+  constructor(doc, cookieName) {
     this.doc = doc;
-    this.platform = platform;
     this.cookieName = cookieName;
-    this.lastCookieString = "";
-    this.lastToken = null;
-    this.parseCount = 0;
   }
   getToken() {
-    if (this.platform === "server") {
+    if (false) {
       return null;
     }
     const cookieString = this.doc.cookie || "";
@@ -1800,17 +1933,13 @@ var HttpXsrfCookieExtractor = class _HttpXsrfCookieExtractor {
     }
     return this.lastToken;
   }
-  static {
-    this.ɵfac = function HttpXsrfCookieExtractor_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpXsrfCookieExtractor)(ɵɵinject(DOCUMENT), ɵɵinject(PLATFORM_ID), ɵɵinject(XSRF_COOKIE_NAME));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _HttpXsrfCookieExtractor,
-      factory: _HttpXsrfCookieExtractor.ɵfac
-    });
-  }
+  static ɵfac = function HttpXsrfCookieExtractor_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpXsrfCookieExtractor)(ɵɵinject(DOCUMENT), ɵɵinject(XSRF_COOKIE_NAME));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpXsrfCookieExtractor,
+    factory: _HttpXsrfCookieExtractor.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXsrfCookieExtractor, [{
@@ -1820,12 +1949,6 @@ var HttpXsrfCookieExtractor = class _HttpXsrfCookieExtractor {
     decorators: [{
       type: Inject,
       args: [DOCUMENT]
-    }]
-  }, {
-    type: void 0,
-    decorators: [{
-      type: Inject,
-      args: [PLATFORM_ID]
     }]
   }, {
     type: void 0,
@@ -1850,23 +1973,20 @@ function xsrfInterceptorFn(req, next) {
   return next(req);
 }
 var HttpXsrfInterceptor = class _HttpXsrfInterceptor {
+  injector;
   constructor(injector) {
     this.injector = injector;
   }
   intercept(initialRequest, next) {
     return runInInjectionContext(this.injector, () => xsrfInterceptorFn(initialRequest, (downstreamRequest) => next.handle(downstreamRequest)));
   }
-  static {
-    this.ɵfac = function HttpXsrfInterceptor_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpXsrfInterceptor)(ɵɵinject(EnvironmentInjector));
-    };
-  }
-  static {
-    this.ɵprov = ɵɵdefineInjectable({
-      token: _HttpXsrfInterceptor,
-      factory: _HttpXsrfInterceptor.ɵfac
-    });
-  }
+  static ɵfac = function HttpXsrfInterceptor_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpXsrfInterceptor)(ɵɵinject(EnvironmentInjector));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpXsrfInterceptor,
+    factory: _HttpXsrfInterceptor.ɵfac
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXsrfInterceptor, [{
@@ -1904,7 +2024,7 @@ function provideHttpClient(...features) {
   }, {
     provide: HttpBackend,
     useFactory: () => {
-      return inject(FetchBackend, {
+      return inject(FETCH_BACKEND, {
         optional: true
       }) ?? inject(HttpXhrBackend);
     }
@@ -1996,6 +2116,9 @@ function withRequestsMadeViaParent() {
 }
 function withFetch() {
   return makeHttpFeature(HttpFeatureKind.Fetch, [FetchBackend, {
+    provide: FETCH_BACKEND,
+    useExisting: FetchBackend
+  }, {
     provide: HttpBackend,
     useExisting: FetchBackend
   }]);
@@ -2024,34 +2147,28 @@ var HttpClientXsrfModule = class _HttpClientXsrfModule {
       providers: withXsrfConfiguration(options).ɵproviders
     };
   }
-  static {
-    this.ɵfac = function HttpClientXsrfModule_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpClientXsrfModule)();
-    };
-  }
-  static {
-    this.ɵmod = ɵɵdefineNgModule({
-      type: _HttpClientXsrfModule
-    });
-  }
-  static {
-    this.ɵinj = ɵɵdefineInjector({
-      providers: [HttpXsrfInterceptor, {
-        provide: HTTP_INTERCEPTORS,
-        useExisting: HttpXsrfInterceptor,
-        multi: true
-      }, {
-        provide: HttpXsrfTokenExtractor,
-        useClass: HttpXsrfCookieExtractor
-      }, withXsrfConfiguration({
-        cookieName: XSRF_DEFAULT_COOKIE_NAME,
-        headerName: XSRF_DEFAULT_HEADER_NAME
-      }).ɵproviders, {
-        provide: XSRF_ENABLED,
-        useValue: true
-      }]
-    });
-  }
+  static ɵfac = function HttpClientXsrfModule_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpClientXsrfModule)();
+  };
+  static ɵmod = ɵɵdefineNgModule({
+    type: _HttpClientXsrfModule
+  });
+  static ɵinj = ɵɵdefineInjector({
+    providers: [HttpXsrfInterceptor, {
+      provide: HTTP_INTERCEPTORS,
+      useExisting: HttpXsrfInterceptor,
+      multi: true
+    }, {
+      provide: HttpXsrfTokenExtractor,
+      useClass: HttpXsrfCookieExtractor
+    }, withXsrfConfiguration({
+      cookieName: XSRF_DEFAULT_COOKIE_NAME,
+      headerName: XSRF_DEFAULT_HEADER_NAME
+    }).ɵproviders, {
+      provide: XSRF_ENABLED,
+      useValue: true
+    }]
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpClientXsrfModule, [{
@@ -2075,21 +2192,15 @@ var HttpClientXsrfModule = class _HttpClientXsrfModule {
   }], null, null);
 })();
 var HttpClientModule = class _HttpClientModule {
-  static {
-    this.ɵfac = function HttpClientModule_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpClientModule)();
-    };
-  }
-  static {
-    this.ɵmod = ɵɵdefineNgModule({
-      type: _HttpClientModule
-    });
-  }
-  static {
-    this.ɵinj = ɵɵdefineInjector({
-      providers: [provideHttpClient(withInterceptorsFromDi())]
-    });
-  }
+  static ɵfac = function HttpClientModule_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpClientModule)();
+  };
+  static ɵmod = ɵɵdefineNgModule({
+    type: _HttpClientModule
+  });
+  static ɵinj = ɵɵdefineInjector({
+    providers: [provideHttpClient(withInterceptorsFromDi())]
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpClientModule, [{
@@ -2104,21 +2215,15 @@ var HttpClientModule = class _HttpClientModule {
   }], null, null);
 })();
 var HttpClientJsonpModule = class _HttpClientJsonpModule {
-  static {
-    this.ɵfac = function HttpClientJsonpModule_Factory(__ngFactoryType__) {
-      return new (__ngFactoryType__ || _HttpClientJsonpModule)();
-    };
-  }
-  static {
-    this.ɵmod = ɵɵdefineNgModule({
-      type: _HttpClientJsonpModule
-    });
-  }
-  static {
-    this.ɵinj = ɵɵdefineInjector({
-      providers: [withJsonpSupport().ɵproviders]
-    });
-  }
+  static ɵfac = function HttpClientJsonpModule_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpClientJsonpModule)();
+  };
+  static ɵmod = ɵɵdefineNgModule({
+    type: _HttpClientJsonpModule
+  });
+  static ɵinj = ɵɵdefineInjector({
+    providers: [withJsonpSupport().ɵproviders]
+  });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpClientJsonpModule, [{
@@ -2128,6 +2233,125 @@ var HttpClientJsonpModule = class _HttpClientJsonpModule {
     }]
   }], null, null);
 })();
+
+// node_modules/@angular/common/fesm2022/http.mjs
+var httpResource = (() => {
+  const jsonFn = makeHttpResourceFn("json");
+  jsonFn.arrayBuffer = makeHttpResourceFn("arraybuffer");
+  jsonFn.blob = makeHttpResourceFn("blob");
+  jsonFn.text = makeHttpResourceFn("text");
+  return jsonFn;
+})();
+function makeHttpResourceFn(responseType) {
+  return function httpResourceRef(request, options) {
+    options?.injector || assertInInjectionContext(httpResource);
+    const injector = options?.injector ?? inject(Injector);
+    return new HttpResourceImpl(injector, () => normalizeRequest(request, responseType), options?.defaultValue, options?.parse, options?.equal);
+  };
+}
+function normalizeRequest(request, responseType) {
+  let unwrappedRequest = typeof request === "function" ? request() : request;
+  if (unwrappedRequest === void 0) {
+    return void 0;
+  } else if (typeof unwrappedRequest === "string") {
+    unwrappedRequest = {
+      url: unwrappedRequest
+    };
+  }
+  const headers = unwrappedRequest.headers instanceof HttpHeaders ? unwrappedRequest.headers : new HttpHeaders(unwrappedRequest.headers);
+  const params = unwrappedRequest.params instanceof HttpParams ? unwrappedRequest.params : new HttpParams({
+    fromObject: unwrappedRequest.params
+  });
+  return new HttpRequest(unwrappedRequest.method ?? "GET", unwrappedRequest.url, unwrappedRequest.body ?? null, {
+    headers,
+    params,
+    reportProgress: unwrappedRequest.reportProgress,
+    withCredentials: unwrappedRequest.withCredentials,
+    responseType,
+    context: unwrappedRequest.context,
+    transferCache: unwrappedRequest.transferCache
+  });
+}
+var HttpResourceImpl = class extends ResourceImpl {
+  client;
+  _headers = linkedSignal({
+    source: this.extRequest,
+    computation: () => void 0
+  });
+  _progress = linkedSignal({
+    source: this.extRequest,
+    computation: () => void 0
+  });
+  _statusCode = linkedSignal({
+    source: this.extRequest,
+    computation: () => void 0
+  });
+  headers = computed(() => this.status() === ResourceStatus.Resolved || this.status() === ResourceStatus.Error ? this._headers() : void 0);
+  progress = this._progress.asReadonly();
+  statusCode = this._statusCode.asReadonly();
+  constructor(injector, request, defaultValue, parse, equal) {
+    super(request, ({
+      request: request2,
+      abortSignal
+    }) => {
+      let sub;
+      const onAbort = () => sub.unsubscribe();
+      abortSignal.addEventListener("abort", onAbort);
+      const stream = signal({
+        value: void 0
+      });
+      let resolve;
+      const promise = new Promise((r) => resolve = r);
+      const send = (value) => {
+        stream.set(value);
+        resolve?.(stream);
+        resolve = void 0;
+      };
+      sub = this.client.request(request2).subscribe({
+        next: (event) => {
+          switch (event.type) {
+            case HttpEventType.Response:
+              this._headers.set(event.headers);
+              this._statusCode.set(event.status);
+              try {
+                send({
+                  value: parse ? parse(event.body) : event.body
+                });
+              } catch (error) {
+                send({
+                  error
+                });
+              }
+              break;
+            case HttpEventType.DownloadProgress:
+              this._progress.set(event);
+              break;
+          }
+        },
+        error: (error) => {
+          if (error instanceof HttpErrorResponse) {
+            this._headers.set(error.headers);
+            this._statusCode.set(error.status);
+          }
+          send({
+            error
+          });
+          abortSignal.removeEventListener("abort", onAbort);
+        },
+        complete: () => {
+          if (resolve) {
+            send({
+              error: new Error("Resource completed before producing a value")
+            });
+          }
+          abortSignal.removeEventListener("abort", onAbort);
+        }
+      });
+      return promise;
+    }, defaultValue, equal, injector);
+    this.client = injector.get(HttpClient);
+  }
+};
 var HTTP_TRANSFER_CACHE_ORIGIN_MAP = new InjectionToken(ngDevMode ? "HTTP_TRANSFER_CACHE_ORIGIN_MAP" : "");
 var BODY = "b";
 var HEADERS = "h";
@@ -2156,11 +2380,10 @@ function transferCacheInterceptorFn(req, next) {
   const originMap = inject(HTTP_TRANSFER_CACHE_ORIGIN_MAP, {
     optional: true
   });
-  const isServer = isPlatformServer(inject(PLATFORM_ID));
-  if (originMap && !isServer) {
+  if (originMap) {
     throw new RuntimeError(2803, ngDevMode && "Angular detected that the `HTTP_TRANSFER_CACHE_ORIGIN_MAP` token is configured and present in the client side code. Please ensure that this token is only provided in the server code of the application.");
   }
-  const requestUrl = isServer && originMap ? mapRequestOriginUrl(req.url, originMap) : req.url;
+  const requestUrl = false ? mapRequestOriginUrl(req.url, originMap) : req.url;
   const storeKey = makeCacheKey(req, requestUrl);
   const response = transferState.get(storeKey, null);
   let headersToInclude = globalOptions.includeHeaders;
@@ -2198,7 +2421,7 @@ function transferCacheInterceptorFn(req, next) {
     }));
   }
   return next(req).pipe(tap((event) => {
-    if (event instanceof HttpResponse && isServer) {
+    if (event instanceof HttpResponse && true && false) {
       transferState.set(storeKey, {
         [BODY]: event.body,
         [HEADERS]: getFilteredHeaders(event.headers, headersToInclude),
@@ -2212,19 +2435,6 @@ function transferCacheInterceptorFn(req, next) {
 }
 function hasAuthHeaders(req) {
   return req.headers.has("authorization") || req.headers.has("proxy-authorization");
-}
-function getFilteredHeaders(headers, includeHeaders) {
-  if (!includeHeaders) {
-    return {};
-  }
-  const headersMap = {};
-  for (const key of includeHeaders) {
-    const values = headers.getAll(key);
-    if (values !== null) {
-      headersMap[key] = values;
-    }
-  }
-  return headersMap;
 }
 function sortAndConcatParams(params) {
   return [...params.keys()].sort().map((k) => `${k}=${params.getAll(k)}`).join("&");
@@ -2266,8 +2476,7 @@ function withHttpTransferCache(cacheOptions) {
   }, {
     provide: HTTP_ROOT_INTERCEPTOR_FNS,
     useValue: transferCacheInterceptorFn,
-    multi: true,
-    deps: [TransferState, CACHE_OPTIONS]
+    multi: true
   }, {
     provide: APP_BOOTSTRAP_LISTENER,
     multi: true,
@@ -2275,7 +2484,7 @@ function withHttpTransferCache(cacheOptions) {
       const appRef = inject(ApplicationRef);
       const cacheState = inject(CACHE_OPTIONS);
       return () => {
-        whenStable(appRef).then(() => {
+        appRef.whenStable().then(() => {
           cacheState.isCacheActive = false;
         });
       };
@@ -2302,22 +2511,6 @@ function appendMissingHeadersDetection(url, headers, headersToInclude) {
       };
     }
   });
-}
-function mapRequestOriginUrl(url, originMap) {
-  const origin = new URL(url, "resolve://").origin;
-  const mappedOrigin = originMap[origin];
-  if (!mappedOrigin) {
-    return url;
-  }
-  if (typeof ngDevMode === "undefined" || ngDevMode) {
-    verifyMappedOrigin(mappedOrigin);
-  }
-  return url.replace(origin, mappedOrigin);
-}
-function verifyMappedOrigin(url) {
-  if (new URL(url, "resolve://").pathname !== "/") {
-    throw new RuntimeError(2804, `Angular detected a URL with a path segment in the value provided for the \`HTTP_TRANSFER_CACHE_ORIGIN_MAP\` token: ${url}. The map should only contain origins without any other segments.`);
-  }
 }
 
 export {
@@ -2357,16 +2550,18 @@ export {
   HttpClientXsrfModule,
   HttpClientModule,
   HttpClientJsonpModule,
+  httpResource,
   HTTP_TRANSFER_CACHE_ORIGIN_MAP,
   withHttpTransferCache
 };
 /*! Bundled license information:
 
+@angular/common/fesm2022/module-z3bvLlVg.mjs:
 @angular/common/fesm2022/http.mjs:
   (**
-   * @license Angular v18.2.13
-   * (c) 2010-2024 Google LLC. https://angular.io/
+   * @license Angular v19.2.14
+   * (c) 2010-2025 Google LLC. https://angular.io/
    * License: MIT
    *)
 */
-//# sourceMappingURL=chunk-QORXPEGD.js.map
+//# sourceMappingURL=chunk-2LFFPLM5.js.map

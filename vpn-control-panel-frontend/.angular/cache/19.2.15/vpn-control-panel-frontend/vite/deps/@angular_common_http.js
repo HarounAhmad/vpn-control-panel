@@ -28,6 +28,7 @@ import {
   JsonpClientBackend,
   JsonpInterceptor,
   REQUESTS_CONTRIBUTE_TO_STABILITY,
+  httpResource,
   provideHttpClient,
   withFetch,
   withHttpTransferCache,
@@ -37,9 +38,9 @@ import {
   withNoXsrfProtection,
   withRequestsMadeViaParent,
   withXsrfConfiguration
-} from "./chunk-QORXPEGD.js";
-import "./chunk-LJGW4UUE.js";
-import "./chunk-VKUFYADX.js";
+} from "./chunk-2LFFPLM5.js";
+import "./chunk-FRXTEGWH.js";
+import "./chunk-LKBYGJ3F.js";
 export {
   FetchBackend,
   HTTP_INTERCEPTORS,
@@ -67,6 +68,7 @@ export {
   HttpXsrfTokenExtractor,
   JsonpClientBackend,
   JsonpInterceptor,
+  httpResource,
   provideHttpClient,
   withFetch,
   withInterceptors,
@@ -81,4 +83,3 @@ export {
   REQUESTS_CONTRIBUTE_TO_STABILITY as ɵREQUESTS_CONTRIBUTE_TO_STABILITY,
   withHttpTransferCache as ɵwithHttpTransferCache
 };
-//# sourceMappingURL=@angular_common_http.js.map

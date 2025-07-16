@@ -4,11 +4,10 @@ import {ClientRulesComponent} from "./components/main/client-rules/client-rules.
 import {ClientSelectorComponent} from "./components/main/client-selector/client-selector.component";
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, ClientRulesComponent, ClientSelectorComponent],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+    selector: 'app-root',
+    imports: [RouterOutlet, ClientRulesComponent, ClientSelectorComponent],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.scss'
 })
 export class AppComponent {
   title = 'vpn-control-panel-frontend';

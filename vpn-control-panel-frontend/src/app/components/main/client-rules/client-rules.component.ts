@@ -4,14 +4,13 @@ import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
 
 @Component({
-  selector: 'app-client-rules',
-  standalone: true,
-  imports: [
-    FormsModule,
-    NgForOf
-  ],
-  templateUrl: './client-rules.component.html',
-  styleUrl: './client-rules.component.scss'
+    selector: 'app-client-rules',
+    imports: [
+        FormsModule,
+        NgForOf
+    ],
+    templateUrl: './client-rules.component.html',
+    styleUrl: './client-rules.component.scss'
 })
 export class ClientRulesComponent implements OnInit {
   @Input() clientCn!: string;

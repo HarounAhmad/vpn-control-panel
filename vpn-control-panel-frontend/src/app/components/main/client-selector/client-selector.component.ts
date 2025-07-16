@@ -5,15 +5,14 @@ import {ClientRulesComponent} from "../client-rules/client-rules.component";
 import {VpnClient, VpnClientService} from "../../../service/vpn-client.service";
 
 @Component({
-  selector: 'app-client-selector',
-  standalone: true,
-  imports: [
-    FormsModule,
-    NgForOf,
-    ClientRulesComponent
-  ],
-  templateUrl: './client-selector.component.html',
-  styleUrl: './client-selector.component.scss'
+    selector: 'app-client-selector',
+    imports: [
+        FormsModule,
+        NgForOf,
+        ClientRulesComponent
+    ],
+    templateUrl: './client-selector.component.html',
+    styleUrl: './client-selector.component.scss'
 })
 export class ClientSelectorComponent implements OnInit{
   clients: VpnClient[] = [];
