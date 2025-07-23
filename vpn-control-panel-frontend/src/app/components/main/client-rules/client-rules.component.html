@@ -1,17 +1,40 @@
 <h3>Rules for {{ clientCn }}</h3>
 
-<ul>
-  <li *ngFor="let rule of rules">
-    {{ rule.protocol }} : {{ rule.dstPort }}
-    <button (click)="removeRule(rule)">Remove</button>
-  </li>
-</ul>
 
 <div>
-  <input type="number" [(ngModel)]="newPort" placeholder="Port" />
-  <select [(ngModel)]="newProtocol">
-    <option value="tcp">TCP</option>
-    <option value="udp">UDP</option>
-  </select>
-  <button (click)="addRule()">Add Rule</button>
+  <input pInputText
+         type="number"
+         placeholder="Enter rule name"
+         [(ngModel)]="newPort"
+         (keyup.enter)="addRule()">
+
+  <p-select [options]="protocolOptions" [(ngModel)]="newProtocol" optionLabel="name">
+
+  </p-select>
+
+  <p-button label="Add Rule"
+            icon="pi pi-plus"
+            (click)="addRule()"
+            [disabled]="!newPort || !newProtocol"/>
 </div>
+
+<p-table
+  [columns]="cols"
+  [value]="rules">
+  <ng-template pTemplate="header">
+    <tr>
+      <th *ngFor="let col of cols">{{ col.header }}</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-rule>
+    <tr>
+      <td *ngFor="let col of cols">
+        <ng-container *ngIf="col.field === 'actions'; else defaultCell">
+          <button (click)="deleteRule(rule)">Delete</button>
+        </ng-container>
+        <ng-template #defaultCell>
+          {{ rule[col.field] }}
+        </ng-template>
+      </td>
+    </tr>
+  </ng-template>

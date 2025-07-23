@@ -1,7 +1,10 @@
 package io.erisdev.vpncontrolpanelbackend.service;
 
+import io.erisdev.vpncontrolpanelbackend.model.CCD;
 import io.erisdev.vpncontrolpanelbackend.model.VpnClient;
+import io.erisdev.vpncontrolpanelbackend.repository.CCDRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.VpnClientRepository;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +16,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class VpnClientService {
     private final VpnClientRepository vpnClientRepository;
+    private final CCDRepository ccdRepository;
 
     public List<VpnClient> findAll() {
         return vpnClientRepository.findAll();
@@ -23,10 +27,27 @@ public class VpnClientService {
     }
 
 
-    public VpnClient createClient(VpnClient client) {
-        client.setCreatedAt(Instant.now());
-        client.setRevoked(false);
-        return vpnClientRepository.save(client);
+    public VpnClient createClient(VpnClientDTO client) {
+        VpnClient existingClient = findByCn(client.getCn());
+        if (existingClient != null) {
+            throw new IllegalArgumentException("Client with CN " + client.getCn() + " already exists.");
+        }
+        CCD ccd = ccdRepository.save(createCCD(client));
+        VpnClient newClient = new VpnClient();
+        newClient.setCn(client.getCn());
+        newClient.setDescription(client.getDescription());
+        newClient.setAllowedDestinations(client.getAllowedDestinations());
+        newClient.setCreatedAt(Instant.now());
+        newClient.setRevoked(false);
+        newClient.setCcd(ccd);
+        return vpnClientRepository.save(newClient);
+    }
+
+    private CCD createCCD(VpnClientDTO client) {
+        return new CCD(
+                client.getCn(),
+                client.getAssignedIp()
+        );
     }
 
     public VpnClient updateDestinations(String cn, Set<String> newDestinations) {

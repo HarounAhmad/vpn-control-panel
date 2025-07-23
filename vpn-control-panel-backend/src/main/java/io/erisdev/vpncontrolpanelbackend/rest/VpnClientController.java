@@ -1,6 +1,7 @@
 package io.erisdev.vpncontrolpanelbackend.rest;
 
 import io.erisdev.vpncontrolpanelbackend.model.VpnClient;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import io.erisdev.vpncontrolpanelbackend.service.VpnClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class VpnClientController {
     }
 
     @PostMapping
-    public VpnClient create(@RequestBody VpnClient client) {
+    public VpnClient create(@RequestBody VpnClientDTO client) {
         return service.createClient(client);
     }
 

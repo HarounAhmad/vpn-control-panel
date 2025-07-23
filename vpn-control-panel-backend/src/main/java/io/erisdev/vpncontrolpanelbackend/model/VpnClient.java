@@ -31,4 +31,8 @@ public class VpnClient {
     private Instant createdAt;
 
     private Instant lastSeen;
+
+    @OneToOne
+    private CCD ccd; // CCD information for the client
+
 }
