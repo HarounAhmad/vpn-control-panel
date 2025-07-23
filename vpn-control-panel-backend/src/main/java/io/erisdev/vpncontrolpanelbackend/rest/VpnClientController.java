@@ -1,6 +1,7 @@
 package io.erisdev.vpncontrolpanelbackend.rest;
 
 import io.erisdev.vpncontrolpanelbackend.model.VpnClient;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.IpRangeDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import io.erisdev.vpncontrolpanelbackend.service.VpnClientService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -49,6 +51,11 @@ public class VpnClientController {
     public ResponseEntity<Void> delete(@PathVariable String cn) {
         service.deleteClient(cn);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/ranges")
+    public ResponseEntity<Set<IpRangeDTO>> getIpRange() {
+        return ResponseEntity.ok(service.getIpRange());
     }
 
 }

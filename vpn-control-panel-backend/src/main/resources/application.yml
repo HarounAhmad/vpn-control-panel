@@ -15,9 +15,17 @@ spring:
 
 
 vpn:
-  allowCertificateOperationsOnServer: false
-
+  guest:
+    ip-range:
+      start: 10.8.0.20
+      end: 10.8.0.255
+    subnet: 255.255.255.0
+  admin:
+    ip-range:
+      start: 10.8.0.10
+      end: 10.8.0.19
+    subnet: 255.255.255.0
 
 certificate:
   operations:
-    allowed: false% 
+    allowed: true

@@ -1,10 +1,11 @@
 import {Component, OnInit} from '@angular/core';
 import {FormsModule} from "@angular/forms";
-import {NgForOf} from "@angular/common";
+import {NgForOf, NgIf} from "@angular/common";
 import {ClientRulesComponent} from "../client-rules/client-rules.component";
 import {VpnClient, VpnClientService} from "../../../service/vpn-client.service";
 import {TableModule} from "primeng/table";
 import {Router} from "@angular/router";
+import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
 
 @Component({
   selector: 'app-client-selector',
@@ -12,7 +13,9 @@ import {Router} from "@angular/router";
     FormsModule,
     NgForOf,
     ClientRulesComponent,
-    TableModule
+    TableModule,
+    TitleBarComponent,
+    NgIf
   ],
   templateUrl: './client-selector.component.html',
   standalone: true,
@@ -38,7 +41,6 @@ export class ClientSelectorComponent implements OnInit{
       this.clients = [...c];
       console.log('Clients loaded:', this.clients)
       if (this.clients.length > 0) {
-        this.selectedClient = this.clients[0];
       }
     })
 

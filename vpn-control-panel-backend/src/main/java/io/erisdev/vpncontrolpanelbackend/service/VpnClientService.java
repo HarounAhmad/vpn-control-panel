@@ -1,11 +1,15 @@
 package io.erisdev.vpncontrolpanelbackend.service;
 
+import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.CCD;
+import io.erisdev.vpncontrolpanelbackend.model.ClientType;
 import io.erisdev.vpncontrolpanelbackend.model.VpnClient;
 import io.erisdev.vpncontrolpanelbackend.repository.CCDRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.VpnClientRepository;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.IpRangeDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,6 +21,7 @@ import java.util.Set;
 public class VpnClientService {
     private final VpnClientRepository vpnClientRepository;
     private final CCDRepository ccdRepository;
+    private final VpnProperties vpnProperties;
 
     public List<VpnClient> findAll() {
         return vpnClientRepository.findAll();
@@ -69,4 +74,13 @@ public class VpnClientService {
         vpnClientRepository.deleteById(cn);
     }
 
+    public Set<IpRangeDTO> getIpRange() {
+        VpnProperties.Guest guest = vpnProperties.getGuest();
+        VpnProperties.Admin admin = vpnProperties.getAdmin();
+        return Set.of(
+            new IpRangeDTO(guest.getIpRange().getStart(), guest.getIpRange().getEnd(), ClientType.GUEST),
+            new IpRangeDTO(admin.getIpRange().getStart(), admin.getIpRange().getEnd(), ClientType.ADMIN)
+        );
+
+    }
 }

@@ -9,6 +9,15 @@ import {DropdownModule} from "primeng/dropdown";
 import {Select} from "primeng/select";
 import {Button, ButtonDirective} from "primeng/button";
 import {VpnClientService} from "../../../service/vpn-client.service";
+import {IconField} from "primeng/iconfield";
+import {InputIcon} from "primeng/inputicon";
+import {Toolbar} from "primeng/toolbar";
+import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
+import {Card} from "primeng/card";
+import {InputNumber} from "primeng/inputnumber";
+import {InputGroupAddon} from "primeng/inputgroupaddon";
+import {InputGroup} from "primeng/inputgroup";
+import {SelectButton} from "primeng/selectbutton";
 
 @Component({
   selector: 'app-client-rules',
@@ -21,19 +30,35 @@ import {VpnClientService} from "../../../service/vpn-client.service";
     DropdownModule,
     Select,
     ButtonDirective,
-    Button
+    Button,
+    IconField,
+    InputIcon,
+    Toolbar,
+    TitleBarComponent,
+    Card,
+    InputNumber,
+    InputGroupAddon,
+    InputGroup,
+    SelectButton
   ],
   templateUrl: './client-rules.component.html',
   standalone: true,
   styleUrl: './client-rules.component.scss'
 })
 export class ClientRulesComponent implements OnInit {
-  clientCn!: string;
+  @Input()
+  set clientCn(value: string) {
+    this._clientCnValue = value;
+    this.loadClient()
+  }
+
+  private _clientCnValue!: string;
+
   rules: NftRule[] = [];
   newPort = 0;
   protocolOptions = [
-    { name: 'TCP', value: 'tcp' },
-    { name: 'UDP', value: 'udp' }
+    { label: 'TCP', value: 'tcp' },
+    { label: 'UDP', value: 'udp' }
   ];
 
   client: any;
@@ -44,13 +69,8 @@ export class ClientRulesComponent implements OnInit {
   constructor(private vpnService: VpnFirewallService, private route: ActivatedRoute, private vpnClientService: VpnClientService) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      const cn = params.get('cn');
-      if (cn) {
-        this.clientCn = cn;
-      }
-    });
-    this.loadCLient()
+   // this.loadClient()
+    this.newProtocol = this.protocolOptions[0];
     this.cols = [
       { field: 'srcIp', header: 'Source IP' },
       { field: 'dstIp', header: 'Destination IP' },
@@ -61,10 +81,12 @@ export class ClientRulesComponent implements OnInit {
   }
 
   loadRules() {
-    this.vpnService.listRules(this.clientCn).subscribe(r => (this.rules = r));
+    this.vpnService.listRules(this._clientCnValue).subscribe(r => (this.rules = r));
   }
-  loadCLient() {
-    this.vpnClientService.getClientByCn(this.clientCn).subscribe(client => {
+
+  loadClient() {
+    console.log('Loading client with CN:', this._clientCnValue)
+    this.vpnClientService.getClientByCn(this._clientCnValue).subscribe(client => {
       if (client) {
         this.client = client;
         this.loadRules();
@@ -78,21 +100,22 @@ export class ClientRulesComponent implements OnInit {
     if (!this.newPort) return;
 
     const rule: NftRule = {
-      clientCn: this.clientCn,
+      clientCn: this._clientCnValue,
       srcIp,
       dstIp,
       protocol: this.newProtocol?.value,
       dstPort: this.newPort,
     };
 
-    this.vpnService.addRule(this.clientCn, rule).subscribe(() => {
+    this.vpnService.addRule(this._clientCnValue, rule).subscribe(data => {
       this.newPort = 0;
+      console.log(data)
       this.loadRules();
     });
   }
 
   deleteRule(rule: NftRule) {
-    this.vpnService.removeRule(this.clientCn, rule).subscribe(() => this.loadRules());
+    this.vpnService.removeRule(this._clientCnValue, rule).subscribe(() => this.loadRules());
 
   }
 }

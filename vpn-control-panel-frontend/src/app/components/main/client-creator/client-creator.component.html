@@ -1,0 +1,90 @@
+<app-title-bar
+  [title]="'Create Client'"
+> </app-title-bar>
+
+<p-card class="mb-4">
+  <ng-template #title>Create Client</ng-template>
+  <ng-template #subtitle>
+    Fill in the details to create a new client <br>
+    this process will create a new VPN client
+  </ng-template>
+
+  <div class="flex flex-col gap-4">
+    <div class="flex gap-4">
+      <input pInputText
+        id="clientName"
+        [(ngModel)]="clientName"
+        placeholder="Common Name"
+        aria-describedby="clientName-help"
+        class="w-full"
+      >
+    </div>
+
+    <div class="flex gap-4">
+      <input pInputText
+        id="description"
+        [(ngModel)]="clientDescription"
+        placeholder="Client Description"
+        aria-describedby="clientDescription-help"
+        class="w-full"
+      >
+    </div>
+  </div>
+
+  <div class="flex gap-4">
+
+  </div>
+
+
+  <div class="flex gap-4">
+    <p-select-button id="protocol" [(ngModel)]="selectedClientType"
+                     [options]="clientTypes"
+                     optionLabel="label"
+                     optionValue="value"
+                     aria-describedby="protocol-help" />
+
+    <p-inputNumber [(ngModel)]="lastOctet" [min]="selectedRange.start" [max]="selectedRange.end" (onBlur)="validateOctet()" />
+
+
+    <small *ngIf="!ipValid && clientIpAddress" class="text-red-500 text-sm">
+      IP must be between {{ selectedRange?.start }} and {{ selectedRange?.end }}
+    </small>
+  </div>
+
+
+  <div class="flex gap-4">
+    <ng-template #title>Allowed Destinations</ng-template>
+    <div class="flex gap-2 mb-2">
+      <p-inputgroup>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="newEntry"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          pattern="^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$"
+          #ip="ngModel"
+          required
+          aria-describedby="ip-invalid" class="w-full" />
+        <p-inputgroup-addon>
+          <p-button icon="pi pi-check" [disabled]="ip.invalid" (click)="addEntry()" severity="secondary" />
+        </p-inputgroup-addon>
+      </p-inputgroup>
+      <small *ngIf="ip.invalid && ip.touched" id="ip-invalid" class="text-red-500 text-sm">
+        Invalid IP address
+      </small>
+    </div>
+
+    <ul class="list-disc ml-4">
+      <li *ngFor="let item of allowedDestinations; let i = index" class="flex items-center gap-2">
+        {{ item }}
+        <p-button icon="pi pi-trash" text severity="danger" size="small" (click)="removeEntry(i)"></p-button>
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #footer>
+    <div class="flex gap-4 mt-1">
+      <p-button label="Cancel" severity="secondary" class="w-full" [outlined]="true" styleClass="w-full"/>
+      <p-button label="Create Client" icon="pi pi-plus" class="w-full" (click)="createClient()"/>
+    </div>
+  </ng-template>

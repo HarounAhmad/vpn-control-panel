@@ -28,4 +28,7 @@ export class VpnClientService {
     return this.http.get<VpnClient>(`${this.baseUrl}/${cn}`);
   }
 
+  getIpRanges() {
+    return this.http.get<any[]>(`${this.baseUrl}/ranges`);
+  }
 }

@@ -1,21 +1,29 @@
+<app-title-bar [title]="'Clients'"></app-title-bar>
 
-<p-table
-  [columns]="columns"
-  selectionMode="single"
-  [(selection)]="selectedClient"
-  [dataKey]="'cn'"
-  (onRowSelect)="onRowSelect()"
-  [value]="clients"
-  [paginator]="true"
-  [rows]="10">
-  <ng-template pTemplate="header">
-    <tr>
-      <th *ngFor="let col of columns">{{ col.header }}</th>
-    </tr>
-  </ng-template>
-  <ng-template pTemplate="body" let-client>
-    <tr [pSelectableRow]="client">
-      <td *ngFor="let col of columns">{{ client[col.field]}}</td>
-    </tr>
-  </ng-template>
-</p-table>
+<div style="display: flex; width: 100%;">
+  <div style="width: 33%;">
+    <p-table
+      [columns]="columns"
+      selectionMode="single"
+      [(selection)]="selectedClient"
+      [dataKey]="'cn'"
+      [value]="clients"
+      [paginator]="true"
+      [rows]="10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of columns">{{ col.header }}</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-client>
+        <tr [pSelectableRow]="client">
+          <td *ngFor="let col of columns">{{ client[col.field] }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div style="width: 67%;">
+    <app-client-rules *ngIf="selectedClient" [clientCn]="selectedClient.cn"></app-client-rules>
+  </div>
+</div>

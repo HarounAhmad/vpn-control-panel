@@ -1,0 +1,17 @@
+<p-toolbar>
+  <ng-template #start>
+    <p-button icon="pi pi-arrow-left" class="mr-2" text severity="secondary" (click)="goBack()"/>
+    <span class="title">{{ title }}</span>
+  </ng-template>
+  <ng-template #center>
+    <p-button text [routerLink]="'/client/create'">Create Client</p-button>
+    <p-button text [routerLink]="'/'">Manage Clients</p-button>
+    <p-button text>Audit</p-button>
+  </ng-template>
+  <ng-template #end>
+    <p-iconfield iconPosition="left">
+      <p-inputicon styleClass="pi pi-search" />
+      <input type="text" pInputText placeholder="Search" />
+    </p-iconfield>
+  </ng-template>
+</p-toolbar>

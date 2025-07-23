@@ -1,22 +1,44 @@
-<h3>Rules for {{ clientCn }}</h3>
+<p-card [style]="{ width: '100%', overflow: 'hidden' }">
+  <ng-template #title>New Rule</ng-template>
+  <ng-template #subtitle>Create a new Rule</ng-template>
 
+  <div class="flex gap-4 mb-3">
+    <div class="flex flex-col gap-1">
+      <p-inputgroup>
+        <p-inputGroupAddon>
+          <label for="port" class="block">Port</label>
+        </p-inputGroupAddon>
+        <p-inputNumber
+          id="port"
+          [(ngModel)]="newPort"
+          [min]="1"
+          [max]="65535"
+          [useGrouping]="false"
+          aria-describedby="port-help">
+        </p-inputNumber>
+        <p-inputgroup-addon>
+        <p-select-button id="protocol" [(ngModel)]="newProtocol"
+                        [options]="protocolOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        aria-describedby="protocol-help" />
+        </p-inputgroup-addon>
+      </p-inputgroup>
+    </div>
+  </div>
 
-<div>
-  <input pInputText
-         type="number"
-         placeholder="Enter rule name"
-         [(ngModel)]="newPort"
-         (keyup.enter)="addRule()">
+  <ng-template #footer>
+    <div class="flex gap-4 mt-1">
+      <p-button label="Cancel" severity="secondary" class="w-full" [outlined]="true" styleClass="w-full"/>
+      <p-button label="Add Rule"
+                icon="pi pi-plus"
+                class="w-full"
+                (click)="addRule()"
+                [disabled]="!newPort || !newProtocol"/>
+    </div>
+  </ng-template>
+</p-card>
 
-  <p-select [options]="protocolOptions" [(ngModel)]="newProtocol" optionLabel="name">
-
-  </p-select>
-
-  <p-button label="Add Rule"
-            icon="pi pi-plus"
-            (click)="addRule()"
-            [disabled]="!newPort || !newProtocol"/>
-</div>
 
 <p-table
   [columns]="cols"

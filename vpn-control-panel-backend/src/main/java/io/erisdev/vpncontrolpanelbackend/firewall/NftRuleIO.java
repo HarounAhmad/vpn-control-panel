@@ -119,7 +119,7 @@ public class NftRuleIO {
 
     public static void reloadFirewall() {
         try {
-            Process p = new ProcessBuilder("nft", "-f", "/etc/nftables.conf")
+            Process p = new ProcessBuilder("nft", "-f", "/home/haroun/nftables.conf")
                     .inheritIO()
                     .start();
             if (p.waitFor() != 0) {
