@@ -4,6 +4,7 @@ import io.erisdev.vpncontrolpanelbackend.firewall.NftRule;
 import io.erisdev.vpncontrolpanelbackend.service.VpnClientFirewallService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,12 +22,11 @@ public class VpnClientFirewallController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public void addRule(@PathVariable String clientCn, @RequestBody NftRule rule) {
+    public ResponseEntity<NftRule> addRule(@PathVariable String clientCn, @RequestBody NftRule rule) {
         if (!rule.getClientCn().equals(clientCn)) {
             throw new IllegalArgumentException("Client CN in path and body must match");
         }
-        firewallService.addClientRule(clientCn, rule.getSrcIp(), rule.getDstIp(), rule.getProtocol(), rule.getDstPort());
+        return ResponseEntity.ok(firewallService.addClientRule(clientCn, rule.getSrcIp(), rule.getDstIp(), rule.getProtocol(), rule.getDstPort()));
     }
 
     @DeleteMapping

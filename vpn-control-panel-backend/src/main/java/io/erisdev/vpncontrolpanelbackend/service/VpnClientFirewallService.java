@@ -18,10 +18,11 @@ public class VpnClientFirewallService {
                 .toList();
     }
 
-    public void addClientRule(String clientCn, String srcIp, String dstIp, String protocol, int dstPort) {
+    public NftRule addClientRule(String clientCn, String srcIp, String dstIp, String protocol, int dstPort) {
         NftRule newRule = new NftRule(clientCn, srcIp, dstIp, protocol, dstPort);
         NftRuleIO.addClientRule(RULE_FILE, newRule);
         NftRuleIO.reloadFirewall();
+        return newRule;
     }
 
     public void removeClientRule(String clientCn, String srcIp, String protocol, int dstPort) {

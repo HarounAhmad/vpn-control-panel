@@ -69,8 +69,7 @@ export class ClientRulesComponent implements OnInit {
   constructor(private vpnService: VpnFirewallService, private route: ActivatedRoute, private vpnClientService: VpnClientService) {}
 
   ngOnInit(): void {
-   // this.loadClient()
-    this.newProtocol = this.protocolOptions[0];
+    this.newProtocol = this.protocolOptions[0].value;
     this.cols = [
       { field: 'srcIp', header: 'Source IP' },
       { field: 'dstIp', header: 'Destination IP' },
@@ -98,18 +97,16 @@ export class ClientRulesComponent implements OnInit {
     const srcIp = this.client.ccd.ip
     const dstIp = this.client.allowedDestinations[0];
     if (!this.newPort) return;
-
     const rule: NftRule = {
       clientCn: this._clientCnValue,
       srcIp,
       dstIp,
-      protocol: this.newProtocol?.value,
+      protocol: this.newProtocol,
       dstPort: this.newPort,
     };
 
     this.vpnService.addRule(this._clientCnValue, rule).subscribe(data => {
       this.newPort = 0;
-      console.log(data)
       this.loadRules();
     });
   }

@@ -37,14 +37,19 @@
 
 
   <div class="flex gap-4">
+    <p-inputgroup>
+      <p-inputgroup-addon>
     <p-select-button id="protocol" [(ngModel)]="selectedClientType"
                      [options]="clientTypes"
                      optionLabel="label"
                      optionValue="value"
                      aria-describedby="protocol-help" (onChange)="onSelectClientType()" />
-
-    <p-inputNumber maxlength="3" [(ngModel)]="lastOctet" [min]="selectedRange.start" [max]="selectedRange.end" (onBlur)="validateOctet()" />
-
+      </p-inputgroup-addon>
+      <p-inputgroup-addon>{{ipPrefix}}</p-inputgroup-addon>
+      <p-inputNumber maxlength="3" [(ngModel)]="lastOctet" [min]="selectedRange.start" [max]="selectedRange.end" (onBlur)="validateOctet()">
+      </p-inputNumber>
+      <p-inputgroup-addon>Min {{selectedRange.start}} --- Max {{selectedRange.end}}</p-inputgroup-addon>
+    </p-inputgroup>
 
     <small *ngIf="!ipValid && clientIpAddress" class="text-red-500 text-sm">
       IP must be between {{ selectedRange?.start }} and {{ selectedRange?.end }}

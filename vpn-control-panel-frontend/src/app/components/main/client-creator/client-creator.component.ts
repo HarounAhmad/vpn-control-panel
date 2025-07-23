@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
 import {Card} from "primeng/card";
 import {InputText} from "primeng/inputtext";
@@ -41,7 +41,7 @@ export interface Client {
   standalone: true,
   styleUrl: './client-creator.component.scss'
 })
-export class ClientCreatorComponent implements OnInit{
+export class ClientCreatorComponent implements OnInit, AfterViewInit{
   clientName: any;
   clientDescription: any;
   clientIpAddress: any;
@@ -63,21 +63,32 @@ export class ClientCreatorComponent implements OnInit{
   clientTypes: { label: string; value: string }[] = [];
 
   selectedClientType: any;
-  lastOctet: any;
+  lastOctet: number = 10;
 
-  selectedRange: { start: number; end: number } = { start: 0, end: 0 };
+  selectedRange: { start: number; end: number } = { start: 10, end: 255 };
 
   ngOnInit() {
     this.clientService.getIpRanges().subscribe((data: any) => {
         this.ranges = [...data]
-        this.clientTypes = this.ranges.map((range: any) => {
-          this.ipPrefix = range.start.split('.').slice(0, 3).join('.') + '.';
-          console.log(this.ipPrefix)
-          return {
-            label: range.clientType.charAt(0).toUpperCase() + range.clientType.slice(1).toLowerCase(),
-            value: range.clientType
-          };
-        })
+        this.clientTypes = this.ranges.map((range: any) => ({
+          label: range.clientType.charAt(0).toUpperCase() + range.clientType.slice(1).toLowerCase(),
+          value: range.clientType
+        }));
+
+      const selected = this.ranges[1];
+      this.selectedClientType = selected.clientType;
+      this.lastOctet = this.getLastOctet(selected.start);
+      this.selectedRange = { start: this.getLastOctet(selected.start), end: this.getLastOctet(selected.end) };
+      console.log(typeof this.selectedRange.start, typeof this.selectedRange.start,typeof this.selectedRange.end, typeof selected.start,typeof selected.end)
+      this.ipPrefix = selected.start.split('.').slice(0, 3).join('.') + '.';
+
+    });
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.lastOctet++; // trigger internal state update
+      this.lastOctet--;
     });
   }
 
@@ -95,7 +106,7 @@ export class ClientCreatorComponent implements OnInit{
           this.clientDescription = '';
           this.allowedDestinations = [];
           this.newEntry = '';
-          this.lastOctet = '';
+          this.lastOctet = 0;
         },
         error: (error) => {
           console.error('Error creating client:', error);
@@ -120,7 +131,7 @@ export class ClientCreatorComponent implements OnInit{
     this.selectedRange = range ? { start: this.getLastOctet(range.start), end: this.getLastOctet(range.end)} : { start: 0, end: 0 };
     if (this.selectedRange) {
       this.selectedRange = { start: this.selectedRange.start, end: this.selectedRange.end };
-      this.lastOctet = '';
+      this.lastOctet = this.selectedRange.start;
       this.octetValid = false;
     }
   }
@@ -131,8 +142,14 @@ export class ClientCreatorComponent implements OnInit{
 
 
   validateOctet(): void {
-    const num = parseInt(this.lastOctet, 10);
-    this.octetValid = !isNaN(num) && num >= this.selectedRange.start && num <= this.selectedRange.start;
+    const num = this.lastOctet;
+    this.octetValid = !isNaN(num) && num >= this.selectedRange.start && num <= this.selectedRange.end;
+  }
+
+  debug(event: any) {
+    console.log('value:', event.value, 'type:', typeof event.value);
+    console.log('min :', this.selectedRange.start, 'type:', typeof this.selectedRange.start);
+    console.log('max  :', this.selectedRange.end, 'type:', typeof this.selectedRange.end);
   }
 }
 

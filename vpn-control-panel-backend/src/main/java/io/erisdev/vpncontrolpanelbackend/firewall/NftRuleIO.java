@@ -43,11 +43,9 @@ public class NftRuleIO {
         List<NftRule> existing = parseRules(path);
 
         List<NftRule> merged = new ArrayList<>();
-        // keep all rules except for the client
         for (NftRule r : existing) {
             if (!r.getClientCn().equals(cn)) merged.add(r);
         }
-        // add new client rules, avoid duplicates
         for (NftRule newRule : newRules) {
             if (!merged.contains(newRule)) merged.add(newRule);
         }
