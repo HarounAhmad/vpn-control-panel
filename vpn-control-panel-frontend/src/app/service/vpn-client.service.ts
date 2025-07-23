@@ -31,4 +31,8 @@ export class VpnClientService {
   getIpRanges() {
     return this.http.get<any[]>(`${this.baseUrl}/ranges`);
   }
+
+  createClient(client: any): Observable<VpnClient> {
+    return this.http.post<VpnClient>(`${this.baseUrl}`, client);
+  }
 }

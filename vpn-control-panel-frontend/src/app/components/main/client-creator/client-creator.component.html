@@ -41,9 +41,9 @@
                      [options]="clientTypes"
                      optionLabel="label"
                      optionValue="value"
-                     aria-describedby="protocol-help" />
+                     aria-describedby="protocol-help" (onChange)="onSelectClientType()" />
 
-    <p-inputNumber [(ngModel)]="lastOctet" [min]="selectedRange.start" [max]="selectedRange.end" (onBlur)="validateOctet()" />
+    <p-inputNumber maxlength="3" [(ngModel)]="lastOctet" [min]="selectedRange.start" [max]="selectedRange.end" (onBlur)="validateOctet()" />
 
 
     <small *ngIf="!ipValid && clientIpAddress" class="text-red-500 text-sm">
