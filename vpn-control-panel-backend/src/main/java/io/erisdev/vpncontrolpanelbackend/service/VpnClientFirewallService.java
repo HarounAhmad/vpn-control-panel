@@ -1,37 +1,42 @@
 package io.erisdev.vpncontrolpanelbackend.service;
 
+import io.erisdev.vpncontrolpanelbackend.config.FirewallProperties;
 import io.erisdev.vpncontrolpanelbackend.firewall.NftRule;
 import io.erisdev.vpncontrolpanelbackend.firewall.NftRuleIO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class VpnClientFirewallService {
 
-    private static final Path RULE_FILE = Path.of("/home/haroun/nftables/per-client-rules.nft");
+    private final NftRuleIO nftRuleIO;
+    private final FirewallProperties firewallProperties;
+    
 
     public List<NftRule> listClientRules(String clientCn) {
-        return NftRuleIO.parseRules(RULE_FILE).stream()
+        return nftRuleIO.parseRules(Path.of(firewallProperties.getClientRulesFile())).stream()
                 .filter(r -> r.getClientCn().equals(clientCn))
                 .toList();
     }
 
     public NftRule addClientRule(String clientCn, String srcIp, String dstIp, String protocol, int dstPort) {
         NftRule newRule = new NftRule(clientCn, srcIp, dstIp, protocol, dstPort);
-        NftRuleIO.addClientRule(RULE_FILE, newRule);
-        NftRuleIO.reloadFirewall();
+        nftRuleIO.addClientRule(Path.of(firewallProperties.getClientRulesFile()), newRule);
+        nftRuleIO.reloadFirewall();
         return newRule;
     }
 
     public void removeClientRule(String clientCn, String srcIp, String protocol, int dstPort) {
-        NftRuleIO.removeClientRule(RULE_FILE, clientCn, srcIp, protocol, dstPort);
-        NftRuleIO.reloadFirewall();
+        nftRuleIO.removeClientRule(Path.of(firewallProperties.getClientRulesFile()), clientCn, srcIp, protocol, dstPort);
+        nftRuleIO.reloadFirewall();
     }
 
     public void replaceClientRules(String clientCn, List<NftRule> newRules) {
-        NftRuleIO.writeRulesForClient(RULE_FILE, clientCn, newRules);
-        NftRuleIO.reloadFirewall();
+        nftRuleIO.writeRulesForClient(Path.of(firewallProperties.getClientRulesFile()), clientCn, newRules);
+        nftRuleIO.reloadFirewall();
     }
 }

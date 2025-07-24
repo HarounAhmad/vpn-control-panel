@@ -1,5 +1,6 @@
 package io.erisdev.vpncontrolpanelbackend.rest.dto;
 
+import io.erisdev.vpncontrolpanelbackend.model.ClientType;
 import lombok.Data;
 
 import java.util.Set;
@@ -10,4 +11,5 @@ public class VpnClientDTO {
     private String description;
     private Set<String> allowedDestinations;
     private String assignedIp; // Assigned IP address
+    private ClientType type;
 }

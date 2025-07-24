@@ -12,9 +12,15 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-
+firewall:
+  client-rules-file: /home/haroun/nftables/per-client-rules.nft
+  nft-config-file: /home/haroun/nftables/nftablse.conf
 
 vpn:
+  server: vpn.erisdev.io
+  port: 1194
+  ccd-directory: /home/haroun/openvpntest/ccd
+  default-destination: 10.8.0.1
   guest:
     ip-range:
       start: 10.8.0.20

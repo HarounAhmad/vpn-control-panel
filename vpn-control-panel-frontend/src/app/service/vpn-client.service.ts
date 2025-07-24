@@ -9,12 +9,18 @@ export interface VpnClient {
   allowedDestinations: string[];
 }
 
+export interface VpnClientResponse {
+  downloadLink: string;
+  client: VpnClient;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class VpnClientService {
 
   private baseUrl = 'http://localhost:8080/api/v1/clients';
+  private backendUrl = 'http://localhost:8080'; //
 
   constructor(private http: HttpClient) {}
 
@@ -32,7 +38,14 @@ export class VpnClientService {
     return this.http.get<any[]>(`${this.baseUrl}/ranges`);
   }
 
-  createClient(client: any): Observable<VpnClient> {
-    return this.http.post<VpnClient>(`${this.baseUrl}`, client);
+  createClient(client: any): Observable<VpnClientResponse> {
+    return this.http.post<VpnClientResponse>(`${this.baseUrl}`, client);
+  }
+
+  downloadClientConfig(downloadLink: string) {
+    return   this.http.get(this.backendUrl + downloadLink, {
+      responseType: 'blob',
+      observe: 'response'
+      });
   }
 }

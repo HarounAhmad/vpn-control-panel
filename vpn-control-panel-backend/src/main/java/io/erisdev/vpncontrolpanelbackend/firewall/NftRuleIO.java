@@ -1,5 +1,9 @@
 package io.erisdev.vpncontrolpanelbackend.firewall;
 
+import io.erisdev.vpncontrolpanelbackend.config.FirewallProperties;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,13 +15,17 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@RequiredArgsConstructor
+@Component
 public class NftRuleIO {
 
     private static final Pattern RULE_PATTERN = Pattern.compile(
             "ip saddr (?<srcIp>\\S+) ip daddr (?<dstIp>\\S+) (?<proto>tcp|udp) dport (?<port>\\d+) accept\\s+# client-(?<cn>\\S+)"
     );
 
-    public static List<NftRule> parseRules(Path path) {
+    private final FirewallProperties firewallProperties;
+
+    public List<NftRule> parseRules(Path path) {
         List<NftRule> rules = new ArrayList<>();
         try {
             List<String> lines = Files.readAllLines(path);
@@ -39,7 +47,7 @@ public class NftRuleIO {
         return rules;
     }
 
-    public static void writeRulesForClient(Path path, String cn, List<NftRule> newRules) {
+    public void writeRulesForClient(Path path, String cn, List<NftRule> newRules) {
         List<NftRule> existing = parseRules(path);
 
         List<NftRule> merged = new ArrayList<>();
@@ -53,7 +61,7 @@ public class NftRuleIO {
         writeRules(path, merged);
     }
 
-    public static void writeRules(Path path, List<NftRule> rules) {
+    public void writeRules(Path path, List<NftRule> rules) {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             // sort rules for deterministic output (optional)
             rules.stream()
@@ -81,7 +89,7 @@ public class NftRuleIO {
         }
     }
 
-    public static void removeClientRule(Path path, String cn, String srcIp, String proto, int dstPort) {
+    public void removeClientRule(Path path, String cn, String srcIp, String proto, int dstPort) {
         List<NftRule> existing = parseRules(path);
 
         List<NftRule> updated = new ArrayList<>();
@@ -98,7 +106,7 @@ public class NftRuleIO {
         writeRules(path, updated);
     }
 
-    public static void addClientRule(Path path, NftRule newRule) {
+    public void addClientRule(Path path, NftRule newRule) {
         List<NftRule> existing = parseRules(path);
 
         boolean exists = existing.stream().anyMatch(r ->
@@ -115,9 +123,9 @@ public class NftRuleIO {
         writeRules(path, existing);
     }
 
-    public static void reloadFirewall() {
+    public void reloadFirewall() {
         try {
-            Process p = new ProcessBuilder("nft", "-f", "/home/haroun/nftables.conf")
+            Process p = new ProcessBuilder("nft", "-f", firewallProperties.getNftConfigFile())
                     .inheritIO()
                     .start();
             if (p.waitFor() != 0) {

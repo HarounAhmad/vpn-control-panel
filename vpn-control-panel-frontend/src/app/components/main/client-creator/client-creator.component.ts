@@ -11,6 +11,7 @@ import {InputMask} from "primeng/inputmask";
 import {VpnClientService} from "../../../service/vpn-client.service";
 import {SelectButton} from "primeng/selectbutton";
 import {InputNumber} from "primeng/inputnumber";
+import { HttpResponse } from '@angular/common/http';
 
 
 export interface Client {
@@ -18,6 +19,7 @@ export interface Client {
   assignedIp: string;
   allowedDestinations: string[];
   description?: string;
+  clientType?: string;
 }
 
 
@@ -67,6 +69,10 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
 
   selectedRange: { start: number; end: number } = { start: 10, end: 255 };
 
+  downloadLink: string = "";
+
+  lastCn: string = '';
+
   ngOnInit() {
     this.clientService.getIpRanges().subscribe((data: any) => {
         this.ranges = [...data]
@@ -75,7 +81,7 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
           value: range.clientType
         }));
 
-      const selected = this.ranges[1];
+      const selected = this.ranges.find(range => range.clientType === 'GUEST') || this.ranges[0];
       this.selectedClientType = selected.clientType;
       this.lastOctet = this.getLastOctet(selected.start);
       this.selectedRange = { start: this.getLastOctet(selected.start), end: this.getLastOctet(selected.end) };
@@ -97,16 +103,15 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
         cn: this.selectedClientType.toLowerCase() + "-" + this.clientName,
         assignedIp: this.ipPrefix + this.lastOctet,
         allowedDestinations: this.allowedDestinations,
-        description: this.clientDescription
+        description: this.clientDescription,
+        clientType: this.selectedClientType
       }
-      console.log(client);
       this.clientService.createClient(client).subscribe({
         next: (response) => {
-          this.clientName = '';
-          this.clientDescription = '';
-          this.allowedDestinations = [];
-          this.newEntry = '';
-          this.lastOctet = 0;
+          this.lastCn = client.cn;
+          this.reset();
+          this.downloadLink = response.downloadLink;
+          console.log(response)
         },
         error: (error) => {
           console.error('Error creating client:', error);
@@ -151,6 +156,39 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
     console.log('min :', this.selectedRange.start, 'type:', typeof this.selectedRange.start);
     console.log('max  :', this.selectedRange.end, 'type:', typeof this.selectedRange.end);
   }
+
+  reset() {
+    this.clientName = '';
+    this.clientDescription = '';
+    this.allowedDestinations = [];
+    this.newEntry = '';
+    this.lastOctet = this.getLastOctet(
+      this.selectedRange.start.toString().split('.').slice(0, 3).join('.') + '.'
+      + this.selectedRange.start)
+  }
+
+  cancel() {
+    this.reset();
+  }
+
+  downloadClientConfig() {
+    this.clientService.downloadClientConfig(this.downloadLink).subscribe({
+      next: (response) => {
+        const blob = new Blob([response.body!], { type: 'application/octet-stream' });
+        const filename = this.lastCn + ".ovpn" || `client.ovpn`;
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+
+        URL.revokeObjectURL(link.href);
+      },
+      error: (error) => {
+        console.error('Error downloading client config:', error);
+      }
+    });
+    }
 }
 
 

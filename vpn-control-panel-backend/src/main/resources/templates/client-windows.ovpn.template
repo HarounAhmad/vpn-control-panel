@@ -1,0 +1,21 @@
+client
+dev tun
+proto udp
+remote {{server_ip}} {{server_port}}
+pull
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+
+ca {{ca_path}}
+cert {{cert_path}}
+key {{key_path}}
+tls-crypt {{tls_crypt_path}}
+
+cipher AES-256-GCM
+auth SHA512
+remote-cert-tls server
+verb 3
+
+script-security 2
