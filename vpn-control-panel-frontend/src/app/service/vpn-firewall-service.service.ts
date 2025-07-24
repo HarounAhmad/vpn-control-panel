@@ -24,9 +24,9 @@ export class VpnFirewallService {
     return this.http.get<NftRule[]>(`${this.baseUrl}/${clientCn}/rules`);
   }
 
-  addRule(clientCn: string, rule: NftRule): Observable<void> {
+  addRule(clientCn: string, rule: NftRule): Observable<NftRule> {
     console.log(rule)
-    return this.http.post<void>(`${this.baseUrl}/${clientCn}/rules`, rule);
+    return this.http.post<NftRule>(`${this.baseUrl}/${clientCn}/rules`, rule);
   }
 
   removeRule(clientCn: string, rule: NftRule): Observable<void> {
