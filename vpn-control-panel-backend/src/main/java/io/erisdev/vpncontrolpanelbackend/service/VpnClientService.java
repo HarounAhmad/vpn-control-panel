@@ -2,6 +2,7 @@ package io.erisdev.vpncontrolpanelbackend.service;
 
 import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.*;
+import io.erisdev.vpncontrolpanelbackend.repository.AuditLogRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.CCDRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.ClientConfigRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.VpnClientRepository;
@@ -41,6 +42,8 @@ public class VpnClientService {
     private final ClientConfigRepository clientConfigRepository;
     private final VpnProperties vpnProperties;
     private final CCDWriter ccdWriter;
+
+    private final AuditLogService auditLogService;
 
     public List<VpnClient> findAll() {
         return vpnClientRepository.findAll();
@@ -87,6 +90,21 @@ public class VpnClientService {
         var response = new VpnClientResponseDTO();
         response.setClient(vpnClientRepository.save(newClient));
         response.setDownloadLink(generateDownloadLink(response.getClient()));
+        auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.CREATE)
+                        .entityType(VpnClient.class.getSimpleName())
+                        .entityId(newClient.getCn())
+                        .details("Created VPN client with CN: " + newClient.getCn())
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(null)
+                        .newValue(newClient.toString())
+                        .build()
+        );
+
+
+
         return response;
     }
 
@@ -102,6 +120,20 @@ public class VpnClientService {
         var config = clientConfigRepository.findById(cn)
                 .orElseThrow(() -> new IllegalArgumentException("Client config for CN " + cn + " does not exist."))
                 .getConfig();
+
+        auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.DOWNLOAD)
+                        .entityType(ClientConfig.class.getSimpleName())
+                        .entityId(cn)
+                        .details("Downloaded VPN client config for CN: " + cn)
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(null)
+                        .newValue(config)
+                        .build()
+        );
+
         return config.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -117,12 +149,25 @@ public class VpnClientService {
         String subnet = isAdmin
                 ? vpnProperties.getAdmin().getSubnet()
                 : vpnProperties.getGuest().getSubnet();
-
-        return new CCD(
+        CCD ccd = new CCD(
                 client.getCn(),
                 client.getAssignedIp(),
                 subnet
         );
+        auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.CREATE)
+                        .entityType(CCD.class.getSimpleName())
+                        .entityId(ccd.getCn())
+                        .details("Created CCD for: " + ccd.getCn())
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(null)
+                        .newValue(ccd.toString())
+                        .build()
+        );
+
+        return ccd;
     }
 
     private Integer parseLastOctet(String ip) {
@@ -134,6 +179,19 @@ public class VpnClientService {
         VpnClient client = findByCn(cn);
         if (client != null) {
             client.setAllowedDestinations(newDestinations);
+
+            auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.UPDATE)
+                        .entityType(VpnClient.class.getSimpleName())
+                        .entityId(cn)
+                        .details("Updated allowed destinations for client: " + cn)
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(client.getAllowedDestinations().toString())
+                        .newValue(newDestinations.toString())
+                        .build());
+
             return vpnClientRepository.save(client);
         }
         return null;
@@ -142,10 +200,37 @@ public class VpnClientService {
     public void revokeClient(String cn) {
         VpnClient client = vpnClientRepository.findById(cn).orElseThrow();
         client.setRevoked(true);
+
+        auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.REVOKE)
+                        .entityType(VpnClient.class.getSimpleName())
+                        .entityId(cn)
+                        .details("Revoked VPN client with CN: " + cn)
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(client.toString())
+                        .newValue("Revoked")
+                        .build()
+        );
+
         vpnClientRepository.save(client);
     }
 
     public void deleteClient(String cn) {
+
+        auditLogService.LogAction(
+                AuditLog.builder()
+                        .action(AuditLogAction.DELETE)
+                        .entityType(VpnClient.class.getSimpleName())
+                        .entityId(cn)
+                        .details("Deleted VPN client with CN: " + cn)
+                        .performedBy("system") // Replace with actual user if available
+                        .timestamp(Instant.now())
+                        .oldValue(vpnClientRepository.findById(cn).map(VpnClient::toString).orElse(null))
+                        .newValue("Deleted")
+                        .build()
+        );
         vpnClientRepository.deleteById(cn);
     }
 

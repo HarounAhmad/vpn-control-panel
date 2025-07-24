@@ -1,0 +1,47 @@
+<app-title-bar [title]="'Audit Log'"></app-title-bar>
+
+<div>
+  <p-table
+    [value]="logs"
+    [columns]="cols"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[10, 20, 50]"
+  >
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns">{{ col.header }}</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-rowData let-columns="columns">
+      <tr>
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.field">
+
+            <ng-container *ngSwitchCase="'timestamp'">
+              {{ rowData[col.field] | formatDate }}
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'details'">
+              <pre>{{ rowData[col.field] | auditDetailsFormatPipe | truncate:100}}</pre>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'oldValue'">
+              <pre>{{ rowData[col.field] | auditDetailsFormatPipe | truncate:100}}</pre>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'newValue'">
+              <pre>{{ rowData[col.field] | auditDetailsFormatPipe | truncate:100}}</pre>
+            </ng-container>
+
+            <ng-container *ngSwitchDefault>
+              {{ rowData[col.field] }}
+            </ng-container>
+
+          </ng-container>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

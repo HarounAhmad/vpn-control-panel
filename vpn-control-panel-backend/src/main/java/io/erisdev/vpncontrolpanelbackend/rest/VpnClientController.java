@@ -30,7 +30,7 @@ public class VpnClientController {
         return service.findAll();
     }
 
-    @GetMapping("/config")
+    @GetMapping("/config") //TODO delete
     public String getConfig() {
         return service.getConfig();
     }
