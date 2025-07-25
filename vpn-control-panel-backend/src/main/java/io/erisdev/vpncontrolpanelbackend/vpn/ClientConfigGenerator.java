@@ -23,8 +23,15 @@ public class ClientConfigGenerator {
 
     }
 
-    private static String generateWindowsConfig(Map<String, String> values) {
-        return "";
+    private static String generateWindowsConfig(Map<String, String> values) throws IOException {
+        var template = Files.readString(
+                new ClassPathResource("templates/client-windows.ovpn.template").getFile().toPath(),
+                StandardCharsets.UTF_8
+        );
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            template = template.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return template;
     }
 
     private static String generateLinuxConfig(Map<String, String> values) throws IOException {

@@ -12,6 +12,7 @@ import {VpnClientService} from "../../../service/vpn-client.service";
 import {SelectButton} from "primeng/selectbutton";
 import {InputNumber} from "primeng/inputnumber";
 import { HttpResponse } from '@angular/common/http';
+import {DropdownModule} from "primeng/dropdown";
 
 
 export interface Client {
@@ -20,6 +21,7 @@ export interface Client {
   allowedDestinations: string[];
   description?: string;
   clientType?: string;
+  os?: string;
 }
 
 
@@ -37,7 +39,8 @@ export interface Client {
     InputMask,
     NgIf,
     SelectButton,
-    InputNumber
+    InputNumber,
+    DropdownModule
   ],
   templateUrl: './client-creator.component.html',
   standalone: true,
@@ -73,6 +76,10 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
 
   lastCn: string = '';
 
+  osOptions: { label: string; value: string }[] = []
+
+  selectedOs: string = 'WINDOWS';
+
   ngOnInit() {
     this.clientService.getIpRanges().subscribe((data: any) => {
         this.ranges = [...data]
@@ -87,7 +94,10 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
       this.selectedRange = { start: this.getLastOctet(selected.start), end: this.getLastOctet(selected.end) };
       console.log(typeof this.selectedRange.start, typeof this.selectedRange.start,typeof this.selectedRange.end, typeof selected.start,typeof selected.end)
       this.ipPrefix = selected.start.split('.').slice(0, 3).join('.') + '.';
-
+      this.osOptions = [
+        { label: 'Windows', value: 'WINDOWS' },
+        { label: 'Linux', value: 'LINUX' },
+      ];
     });
   }
 
@@ -104,7 +114,8 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
         assignedIp: this.ipPrefix + this.lastOctet,
         allowedDestinations: this.allowedDestinations,
         description: this.clientDescription,
-        clientType: this.selectedClientType
+        clientType: this.selectedClientType,
+        os: this.selectedOs
       }
       this.clientService.createClient(client).subscribe({
         next: (response) => {

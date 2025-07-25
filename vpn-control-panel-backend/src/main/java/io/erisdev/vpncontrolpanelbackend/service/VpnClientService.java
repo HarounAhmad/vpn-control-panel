@@ -79,7 +79,7 @@ public class VpnClientService {
                         CA_PATH, CA_CRT,
                         CERT_PATH, client.getCn() + CRT,
                         KEY_PATH, client.getCn() + KEY,
-                        OS, OsTypes.LINUX.name(),
+                        OS, client.getOs(),
                         TLS_CRYPT_PATH, TA_KEY));
 
         clientConfigRepository.save(new ClientConfig(
