@@ -1,0 +1,17 @@
+<div class="p-fluid p-formgrid p-grid" style="max-width: 400px; margin: auto; margin-top: 10vh;">
+  <div class="p-field p-col-12">
+    <p-iftalabel>
+      <input id="username" pInputText [(ngModel)]="username" style="width: 100%" (keyup.enter)="login()"/>
+      <label for="username">Username</label>
+    </p-iftalabel>
+  <div class="p-field p-col-12" style="margin-top: 0.5rem">
+    <p-iftalabel>
+      <p-password id="password" [(ngModel)]="password" name="password" [feedback]="false" [toggleMask]="true" [style]="{ width: '100%' }" (keyup.enter)="login()" ></p-password>
+      <label for="password">Password</label>
+    </p-iftalabel>
+  </div>
+  <div class="p-field p-col-12" style="margin-top: 0.5rem;">
+    <button pButton type="button" label="Login" [disabled]="loginDisabled()" (keyup.enter)="login()" (click)="login()" style="width: 100%"></button>
+  </div>
+</div>
+<p-toast />

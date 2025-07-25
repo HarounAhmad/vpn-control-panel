@@ -26,6 +26,6 @@ export class AuditLogService {
   ) { }
 
   getAuditLogs(): Observable<AuditLog[]> {
-      return this.http.get<AuditLog[]> (`${this.baseUrl}`);
+      return this.http.get<AuditLog[]> (`${this.baseUrl}`, {withCredentials: true});
   }
 }

@@ -6,6 +6,7 @@ import {provideHttpClient} from "@angular/common/http";
 import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 import {provideAnimations} from "@angular/platform-browser/animations";
+import {MessageService} from "primeng/api";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
         preset: Aura
       }
     }),
-    provideAnimations()
+    provideAnimations(),
+    { provide: MessageService, useClass: MessageService }
   ]
 };

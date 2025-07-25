@@ -4,5 +4,5 @@ public enum AuditLogAction {
     CREATE,
     UPDATE,
     DELETE,
-    REVOKE, DOWNLOAD
+    REVOKE, LOGIN_SUCCESS, LOGIN_FAILURE, DOWNLOAD
 }

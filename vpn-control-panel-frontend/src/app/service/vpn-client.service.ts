@@ -26,26 +26,27 @@ export class VpnClientService {
 
 
   getAllClients(): Observable<VpnClient[]> {
-    return this.http.get<VpnClient[]>(`${this.baseUrl}`);
+    return this.http.get<VpnClient[]>(`${this.baseUrl}`, { withCredentials: true });
   }
 
 
   getClientByCn(cn: string): Observable<VpnClient> {
-    return this.http.get<VpnClient>(`${this.baseUrl}/${cn}`);
+    return this.http.get<VpnClient>(`${this.baseUrl}/${cn}`, { withCredentials: true });
   }
 
   getIpRanges() {
-    return this.http.get<any[]>(`${this.baseUrl}/ranges`);
+    return this.http.get<any[]>(`${this.baseUrl}/ranges`, { withCredentials: true });
   }
 
   createClient(client: any): Observable<VpnClientResponse> {
-    return this.http.post<VpnClientResponse>(`${this.baseUrl}`, client);
+    return this.http.post<VpnClientResponse>(`${this.baseUrl}`, client, { withCredentials: true });
   }
 
   downloadClientConfig(downloadLink: string) {
     return   this.http.get(this.backendUrl + downloadLink, {
       responseType: 'blob',
-      observe: 'response'
+      observe: 'response',
+      withCredentials: true
       });
   }
 }

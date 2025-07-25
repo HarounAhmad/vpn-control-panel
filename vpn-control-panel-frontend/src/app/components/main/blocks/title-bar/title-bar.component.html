@@ -1,17 +1,13 @@
 <p-toolbar>
   <ng-template #start>
-    <p-button icon="pi pi-arrow-left" class="mr-2" text severity="secondary" (click)="goBack()"/>
     <span class="title">{{ title }}</span>
   </ng-template>
   <ng-template #center>
-    <p-button text [routerLink]="'/client/create'">Create Client</p-button>
-    <p-button text [routerLink]="'/clients'">Manage Clients</p-button>
-    <p-button text [routerLink]="'/audit-logs'">Audit</p-button>
+    <p-button text *ngIf="hasRole('SYSADMIN')" [routerLink]="'/client/create'">Create Client</p-button>
+    <p-button text *ngIf="hasRole('SYSADMIN')" [routerLink]="'/clients'">Manage Clients</p-button>
+    <p-button text *ngIf="hasRole('SYSADMIN') || hasRole('AUDITOR')" [routerLink]="'/audit-logs'">Audit</p-button>
   </ng-template>
   <ng-template #end>
-    <p-iconfield iconPosition="left">
-      <p-inputicon styleClass="pi pi-search" />
-      <input type="text" pInputText placeholder="Search" />
-    </p-iconfield>
+    <p-splitbutton text [label]="username" [model]="items" />
   </ng-template>
 </p-toolbar>
