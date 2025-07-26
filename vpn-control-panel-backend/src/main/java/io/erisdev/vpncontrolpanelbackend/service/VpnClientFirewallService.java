@@ -30,16 +30,8 @@ public class VpnClientFirewallService {
         nftRuleIO.addClientRule(Path.of(firewallProperties.getClientRulesFile()), newRule);
         nftRuleIO.reloadFirewall();
         auditLogService.LogAction(
-                AuditLog.builder()
-                        .action(AuditLogAction.CREATE)
-                        .details("Added firewall rule for client: " + clientCn)
-                        .entityType(NftRule.class.getSimpleName())
-                        .entityId("n/a - firewall rules are not stored in the database")
-                        .performedBy("system") // Assuming this is an internal operation
-                        .newValue(newRule.toString())
-                        .timestamp(java.time.Instant.now())
-                        .oldValue(null)
-                        .build()
+                AuditLog.builder().build()
+
         );
         return newRule;
     }
@@ -48,16 +40,8 @@ public class VpnClientFirewallService {
         nftRuleIO.removeClientRule(Path.of(firewallProperties.getClientRulesFile()), clientCn, srcIp, protocol, dstPort);
         nftRuleIO.reloadFirewall();
         auditLogService.LogAction(
-                AuditLog.builder()
-                        .action(AuditLogAction.DELETE)
-                        .details("Removed firewall rule for client: " + clientCn)
-                        .entityType(NftRule.class.getSimpleName())
-                        .entityId("n/a - firewall rules are not stored in the database")
-                        .performedBy("system") // Assuming this is an internal operation
-                        .newValue(null)
-                        .timestamp(java.time.Instant.now())
-                        .oldValue("srcIp: " + srcIp + ", protocol: " + protocol + ", dstPort: " + dstPort)
-                        .build()
+                AuditLog.builder().build()
+
         );
     }
 
@@ -65,16 +49,8 @@ public class VpnClientFirewallService {
         nftRuleIO.writeRulesForClient(Path.of(firewallProperties.getClientRulesFile()), clientCn, newRules);
         nftRuleIO.reloadFirewall();
         auditLogService.LogAction(
-                AuditLog.builder()
-                        .action(AuditLogAction.UPDATE)
-                        .details("Replaced firewall rules for client: " + clientCn)
-                        .entityType(NftRule.class.getSimpleName())
-                        .entityId("n/a - firewall rules are not stored in the database")
-                        .performedBy("system") // Assuming this is an internal operation
-                        .newValue(newRules.toString())
-                        .timestamp(java.time.Instant.now())
-                        .oldValue("Previous rules replaced")
-                        .build()
+                AuditLog.builder().build()
+
         );
     }
 }

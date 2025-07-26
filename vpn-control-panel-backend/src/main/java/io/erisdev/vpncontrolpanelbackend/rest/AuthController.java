@@ -2,7 +2,7 @@ package io.erisdev.vpncontrolpanelbackend.rest;
 
 import io.erisdev.vpncontrolpanelbackend.rest.dto.LoginRequestDto;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.UserDto;
-import io.erisdev.vpncontrolpanelbackend.security.AuthService;
+import io.erisdev.vpncontrolpanelbackend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

@@ -5,18 +5,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuditLogDto {
-    private String id;
     private String action;
     private String entityType;
-    private String entityId;
-    private String details;
+    private String summary;
     private String performedBy;
     private String timestamp;
-    private String oldValue;
-    private String newValue;
+    private Map<String, String> details;
 }

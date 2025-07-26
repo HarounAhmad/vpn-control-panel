@@ -1,17 +1,14 @@
-package io.erisdev.vpncontrolpanelbackend.security;
+package io.erisdev.vpncontrolpanelbackend.service;
 
 
 import io.erisdev.vpncontrolpanelbackend.model.AuditLog;
-import io.erisdev.vpncontrolpanelbackend.model.AuditLogAction;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.LoginRequestDto;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.UserDto;
 import io.erisdev.vpncontrolpanelbackend.security.util.JwtUtil;
-import io.erisdev.vpncontrolpanelbackend.service.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,21 +47,12 @@ public class AuthService {
                     .build();
             response.addHeader("Set-Cookie", cookie.toString());
             auditLogService.LogAction(
-                    AuditLog.builder()
-                            .action(AuditLogAction.LOGIN_SUCCESS)
-                            .performedBy(userDetails.getUsername())
-                            .details("User logged in successfully from IP: " + ipAddress)
-                            .timestamp(Instant.now())
-                            .build()
+                    AuditLog.builder().build()
+
             );
         } catch (BadCredentialsException e) {
             auditLogService.LogAction(
-                    AuditLog.builder()
-                            .action(AuditLogAction.LOGIN_FAILURE)
-                            .performedBy(loginRequest.getUsername())
-                            .details("Failed login attempt from IP: " + ipAddress + ". Reason: " + e.getMessage())
-                            .timestamp(Instant.now())
-                            .build()
+                    AuditLog.builder().build()
             );
             throw e;
 
