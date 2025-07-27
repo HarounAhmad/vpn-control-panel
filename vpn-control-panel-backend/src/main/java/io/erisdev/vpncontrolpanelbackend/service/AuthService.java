@@ -3,6 +3,7 @@ package io.erisdev.vpncontrolpanelbackend.service;
 
 import io.erisdev.vpncontrolpanelbackend.model.AuditLog;
 import io.erisdev.vpncontrolpanelbackend.model.AuditLogAction;
+import io.erisdev.vpncontrolpanelbackend.model.User;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.LoginRequestDto;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.UserDto;
 import io.erisdev.vpncontrolpanelbackend.security.util.JwtUtil;
@@ -55,7 +56,7 @@ public class AuthService {
                     AuditLog.builder()
                             .action(AuditLogAction.LOGIN_SUCCESS)
                             .performedBy(auditContext.getUsername())
-                            .entityType("USER")
+                            .entityType(User.class.getSimpleName())
                             .summary("User login successful")
                             .timestamp(Instant.now())
                             .details(auditContext.loginDetails(request, true, "Login successful"))
@@ -64,7 +65,14 @@ public class AuthService {
             );
         } catch (BadCredentialsException e) {
             auditLogService.LogAction(
-                    AuditLog.builder().build()
+                    AuditLog.builder()
+                            .action(AuditLogAction.LOGIN_FAILURE)
+                            .performedBy(loginRequest.getUsername())
+                            .entityType(User.class.getSimpleName())
+                            .summary("User login failed")
+                            .timestamp(Instant.now())
+                            .details(auditContext.loginDetails(request, false, "Invalid credentials", loginRequest.getUsername()))
+                            .build()
             );
             throw e;
 

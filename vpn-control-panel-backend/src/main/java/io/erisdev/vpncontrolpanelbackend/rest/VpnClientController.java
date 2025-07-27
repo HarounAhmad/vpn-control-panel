@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -43,13 +44,14 @@ public class VpnClientController {
     }
 
     @PostMapping
-    public VpnClientResponseDTO create(@RequestBody VpnClientDTO client) throws IOException {
-        return service.createClient(client);
+    public VpnClientResponseDTO create(@RequestBody VpnClientDTO client, Authentication authentication) throws IOException {
+
+        return service.createClient(client, authentication.getName());
     }
 
     @GetMapping("/{cn}/config/download")
-    public ResponseEntity<byte[]> downloadConfig(@PathVariable String cn) throws IOException {
-        byte[] content = service.downloadClientConfig(cn);
+    public ResponseEntity<byte[]> downloadConfig(@PathVariable String cn, Authentication authentication) throws IOException {
+        byte[] content = service.downloadClientConfig(cn, authentication.getName());
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + cn + ".ovpn");
         headers.add(HttpHeaders.CONTENT_TYPE, "application/octet-stream");

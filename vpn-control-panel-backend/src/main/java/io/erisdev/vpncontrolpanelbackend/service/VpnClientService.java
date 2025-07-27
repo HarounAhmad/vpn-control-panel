@@ -44,6 +44,7 @@ public class VpnClientService {
     private final CCDWriter ccdWriter;
 
     private final AuditLogService auditLogService;
+    private final AuditContext auditContext;
 
     public List<VpnClient> findAll() {
         return vpnClientRepository.findAll();
@@ -54,7 +55,7 @@ public class VpnClientService {
     }
 
 
-    public VpnClientResponseDTO createClient(VpnClientDTO client) throws IOException {
+    public VpnClientResponseDTO createClient(VpnClientDTO client, String username) throws IOException {
         VpnClient existingClient = findByCn(client.getCn());
         if (existingClient != null) {
             throw new IllegalArgumentException("Client with CN " + client.getCn() + " already exists.");
@@ -62,7 +63,7 @@ public class VpnClientService {
         if (client.getAllowedDestinations() == null || client.getAllowedDestinations().isEmpty()) {
             client.setAllowedDestinations(Set.of(vpnProperties.getDefaultDestination()));
         }
-        CCD ccd = ccdRepository.save(createCCD(client));
+        CCD ccd = ccdRepository.save(createCCD(client, username));
         ccdWriter.writeCCD(ccd);
         VpnClient newClient = new VpnClient();
         newClient.setCn(client.getCn());
@@ -91,7 +92,14 @@ public class VpnClientService {
         response.setClient(vpnClientRepository.save(newClient));
         response.setDownloadLink(generateDownloadLink(response.getClient()));
         auditLogService.LogAction(
-                AuditLog.builder().build()
+                AuditLog.builder()
+                        .action(AuditLogAction.CREATE_CLIENT)
+                        .performedBy(username)
+                        .entityType(VpnClient.class.getSimpleName())
+                        .summary("Created VPN client with CN: " + client.getCn())
+                        .timestamp(Instant.now())
+                        .details(auditContext.vpnClient(client))
+                        .build()
         );
 
 
@@ -103,7 +111,7 @@ public class VpnClientService {
         return String.format(DOWNLOAD_LINK_TEMPLATE, client.getCn());
     }
 
-    public byte[] downloadClientConfig(String cn) throws IOException {
+    public byte[] downloadClientConfig(String cn, String username) throws IOException {
         VpnClient client = findByCn(cn);
         if (client == null) {
             throw new IllegalArgumentException("Client with CN " + cn + " does not exist.");
@@ -113,14 +121,21 @@ public class VpnClientService {
                 .getConfig();
 
         auditLogService.LogAction(
-                AuditLog.builder().build()
+                AuditLog.builder()
+                        .action(AuditLogAction.DOWNLOAD)
+                        .performedBy(username)
+                        .entityType(ClientConfig.class.getSimpleName())
+                        .summary("Downloaded VPN client config for CN: " + cn)
+                        .timestamp(Instant.now())
+                        .details(auditContext.downloadDetails(cn + ".ovpn", null))
+                        .build()
 
         );
 
         return config.getBytes(StandardCharsets.UTF_8);
     }
 
-    private CCD createCCD(VpnClientDTO client) {
+    private CCD createCCD(VpnClientDTO client, String username) {
         var adminIpRange = vpnProperties.getAdmin().getIpRange();
 
         int clientLastOctet = parseLastOctet(client.getAssignedIp());
@@ -138,7 +153,14 @@ public class VpnClientService {
                 subnet
         );
         auditLogService.LogAction(
-                AuditLog.builder().build()
+                AuditLog.builder()
+                        .action(AuditLogAction.CREATE_CLIENT)
+                        .performedBy(username)
+                        .entityType(CCD.class.getSimpleName())
+                        .summary("Created VPN client with CN: " + client.getCn())
+                        .timestamp(Instant.now())
+                        .details(auditContext.ccd(ccd))
+                        .build()
 
         );
 
