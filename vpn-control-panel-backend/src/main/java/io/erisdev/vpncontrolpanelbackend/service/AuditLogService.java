@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,14 @@ public class AuditLogService {
 
 
     private AuditLogDto mapToDto(AuditLog e) {
-        return AuditLogDto.builder().build();
+        return AuditLogDto.builder()
+                .action(e.getAction().name())
+                .entityType(e.getEntityType())
+                .summary(e.getSummary())
+                .performedBy(e.getPerformedBy())
+                .timestamp(e.getTimestamp().toString())
+                .details(e.getDetails() != null ? e.getDetails() : Map.of())
+                .build();
 
     }
 }

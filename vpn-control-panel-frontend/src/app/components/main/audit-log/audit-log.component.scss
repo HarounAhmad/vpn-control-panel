@@ -1,0 +1,16 @@
+.detail-row {
+  display: grid;
+  grid-template-columns: 200px 1fr; /* fixed width for keys, flexible for values */
+  column-gap: 1.5rem;              /* spacing between columns */
+  padding: 0.5rem 0;
+  align-items: start;
+}
+
+.detail-key {
+  font-weight: 500;
+  white-space: nowrap;             /* prevents breaking */
+}
+
+.detail-value {
+  word-break: break-word;          /* wraps long text gracefully */
+}
