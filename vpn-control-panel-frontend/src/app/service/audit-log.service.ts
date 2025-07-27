@@ -5,15 +5,12 @@ import {Observable} from "rxjs";
 
 
 export interface AuditLog {
-  id: string,
-  action: string,
-  entityType: string,
-  entityId: string,
-  details: string,
-  performedBy: string,
-  timestamp: string
-  oldValue?: string,
-  newValue?: string
+  action: string;
+  entityType: string;
+  summary: string;
+  timestamp: string;
+  performedBy: string;
+  details: Map<string, string>
 }
 @Injectable({
   providedIn: 'root'

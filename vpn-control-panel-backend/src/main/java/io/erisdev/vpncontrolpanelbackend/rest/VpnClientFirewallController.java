@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,20 +25,20 @@ public class VpnClientFirewallController {
     }
 
     @PostMapping
-    public ResponseEntity<NftRule> addRule(@PathVariable String clientCn, @RequestBody NftRule rule) {
+    public ResponseEntity<NftRule> addRule(@PathVariable String clientCn, @RequestBody NftRule rule, Authentication authentication) {
         if (!rule.getClientCn().equals(clientCn)) {
             throw new IllegalArgumentException("Client CN in path and body must match");
         }
-        return ResponseEntity.ok(firewallService.addClientRule(clientCn, rule.getSrcIp(), rule.getDstIp(), rule.getProtocol(), rule.getDstPort()));
+        return ResponseEntity.ok(firewallService.addClientRule(clientCn, rule.getSrcIp(), rule.getDstIp(), rule.getProtocol(), rule.getDstPort(), authentication.getName()));
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeRule(@PathVariable String clientCn, @RequestBody NftRule rule) {
+    public void removeRule(@PathVariable String clientCn, @RequestBody NftRule rule, Authentication authentication) {
         if (!rule.getClientCn().equals(clientCn)) {
             throw new IllegalArgumentException("Client CN in path and body must match");
         }
-        firewallService.removeClientRule(clientCn, rule.getSrcIp(), rule.getProtocol(), rule.getDstPort());
+        firewallService.removeClientRule(clientCn, rule.getSrcIp(), rule.getProtocol(), rule.getDstPort(), authentication.getName());
     }
 
     @PutMapping
