@@ -44,7 +44,7 @@ public class AuditContext {
     public Map<String, String> vpnClient(VpnClientDTO client) {
         return Map.of(
                 "cn", client.getCn(),
-                "description", client.getDescription(),
+                "description", client.getDescription() != null ? client.getDescription() : "N/A",
                 "assignedIp", client.getAssignedIp(),
                 "allowedIps", String.join(", ", client.getAllowedDestinations()),
                 "os", client.getOs()

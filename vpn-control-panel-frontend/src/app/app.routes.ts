@@ -12,27 +12,34 @@ import {RoleGuard} from "./auth/role.guard";
 export const routes: Routes = [
   {
     'path': '',
-    component: LoginComponent
-    ,canActivate: [LoginGuard]
+    component: LoginComponent,
+    canActivate: [LoginGuard]
   },
   {
-    'path': 'clients',
-    component: ClientSelectorComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['SYSADMIN'] }
-  },
-  {
-    'path': 'client/create',
-    component: ClientCreatorComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['SYSADMIN'] }
-  },
-  {
-    'path': 'audit-logs',
-    component: AuditLogComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['SYSADMIN', 'AUDITOR']
-    }
+    path: '',
+    component: MainComponent,
+    canActivate: [AuthGuard],
+    children: [
+      {
+        'path': 'clients',
+        component: ClientSelectorComponent,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { roles: ['SYSADMIN'] }
+      },
+      {
+        'path': 'client/create',
+        component: ClientCreatorComponent,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { roles: ['SYSADMIN'] }
+      },
+      {
+        'path': 'audit-logs',
+        component: AuditLogComponent,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { roles: ['SYSADMIN', 'AUDITOR']
+        }
+      }
+  ]
   }
 
 

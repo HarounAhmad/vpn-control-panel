@@ -13,6 +13,7 @@ import {SelectButton} from "primeng/selectbutton";
 import {InputNumber} from "primeng/inputnumber";
 import { HttpResponse } from '@angular/common/http';
 import {DropdownModule} from "primeng/dropdown";
+import {AlertsService} from "../../../service/util/alerts.service";
 
 
 export interface Client {
@@ -58,7 +59,7 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
     /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
   private octetValid: boolean = true;
 
-  constructor(private clientService: VpnClientService) {
+  constructor(private clientService: VpnClientService, private alertService: AlertsService) {
   }
 
   ipPrefix: string = '10.8.0.';
@@ -122,7 +123,10 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
           this.lastCn = client.cn;
           this.reset();
           this.downloadLink = response.downloadLink;
-          console.log(response)
+          this.alertService.successSelfClosing(
+            'Client Created',
+            `Client ${client.cn} has been created successfully.`
+          );
         },
         error: (error) => {
           console.error('Error creating client:', error);
