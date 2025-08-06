@@ -18,6 +18,7 @@ import {InputNumber} from "primeng/inputnumber";
 import {InputGroupAddon} from "primeng/inputgroupaddon";
 import {InputGroup} from "primeng/inputgroup";
 import {SelectButton} from "primeng/selectbutton";
+import {AlertsService} from "../../../service/util/alerts.service";
 
 @Component({
   selector: 'app-client-rules',
@@ -66,7 +67,7 @@ export class ClientRulesComponent implements OnInit {
   newProtocol: any;
   cols: any[] = []
 
-  constructor(private vpnService: VpnFirewallService, private route: ActivatedRoute, private vpnClientService: VpnClientService) {}
+  constructor(private vpnService: VpnFirewallService, private route: ActivatedRoute, private vpnClientService: VpnClientService, private alertService: AlertsService) {}
 
   ngOnInit(): void {
     this.newProtocol = this.protocolOptions[0].value;
@@ -103,11 +104,18 @@ export class ClientRulesComponent implements OnInit {
       dstIp,
       protocol: this.newProtocol,
       dstPort: this.newPort,
+      response: ""
     };
 
     this.vpnService.addRule(this._clientCnValue, rule).subscribe(data => {
       this.newPort = 0;
-      this.loadRules();
+      this.rules.push(data)
+      this.alertService.successSelfClosing("Success", "Rule added Successfully")
+      if (data.response.startsWith("WARNING")) {
+        this.alertService.warning("Warning", data.response)
+      } else if (data.response.startsWith("SUCCESS")) {
+        this.alertService.warning("Success", data.response)
+      }
     });
   }
 

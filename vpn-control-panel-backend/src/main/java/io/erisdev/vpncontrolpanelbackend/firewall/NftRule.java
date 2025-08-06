@@ -13,4 +13,5 @@ public class NftRule {
     private String dstIp;
     private String protocol;
     private int dstPort;
+    private String response = "";
 }

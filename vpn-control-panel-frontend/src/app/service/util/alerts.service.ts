@@ -19,7 +19,8 @@ export class AlertsService {
       severity: 'success',
       summary: summary,
       detail: detail,
-      life: undefined
+      life: undefined,
+      sticky: true
     };
 
     this.alertEmitter.next(alert);
@@ -30,7 +31,8 @@ export class AlertsService {
       severity: 'success',
       summary: summary,
       detail: detail,
-      life: this.defaultLife
+      life: this.defaultLife,
+      sticky: false
     };
     console.log('Alert created:', alert);
 
@@ -40,10 +42,11 @@ export class AlertsService {
 
   public warning(summary: string, detail: string) {
     const alert: Alert = {
-      severity: 'warning',
+      severity: 'warn',
       summary: summary,
       detail: detail,
-      life: undefined
+      life: undefined,
+      sticky: true
     };
 
     this.alertEmitter.next(alert);
@@ -52,10 +55,11 @@ export class AlertsService {
 
   public warningSelfClosing(summary: string, detail: string) {
     const alert: Alert = {
-      severity: 'warning',
+      severity: 'warn',
       summary: summary,
       detail: detail,
-      life: this.defaultLife
+      life: this.defaultLife,
+      sticky: false
     };
 
     this.alertEmitter.next(alert);
@@ -66,7 +70,8 @@ export class AlertsService {
       severity: 'error',
       summary: summary,
       detail: detail,
-      life: undefined
+      life: undefined,
+      sticky: true
     };
 
     this.alertEmitter.next(alert);
@@ -78,7 +83,8 @@ export class AlertsService {
       severity: 'error',
       summary: summary,
       detail: detail,
-      life: this.defaultLife
+      life: this.defaultLife,
+      sticky: false
     };
 
     this.alertEmitter.next(alert);
@@ -89,7 +95,8 @@ export class AlertsService {
       severity: 'info',
       summary: summary,
       detail: detail,
-      life: undefined
+      life: undefined,
+      sticky: true
     };
 
     this.alertEmitter.next(alert);
@@ -100,7 +107,8 @@ export class AlertsService {
       severity: 'info',
       summary: summary,
       detail: detail,
-      life: this.defaultLife
+      life: this.defaultLife,
+      sticky: false
     };
 
     this.alertEmitter.next(alert);

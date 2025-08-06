@@ -29,9 +29,10 @@ public class VpnClientFirewallService {
     }
 
     public NftRule addClientRule(String clientCn, String srcIp, String dstIp, String protocol, int dstPort, String username) {
-        NftRule newRule = new NftRule(clientCn, srcIp, dstIp, protocol, dstPort);
+        NftRule newRule = new NftRule(clientCn, srcIp, dstIp, protocol, dstPort, "");
         nftRuleIO.addClientRule(Path.of(firewallProperties.getClientRulesFile()), newRule);
-        nftRuleIO.reloadFirewall();
+        String reloadResponse = nftRuleIO.reloadFirewall();
+        newRule.setResponse(reloadResponse);
         auditLogService.LogAction(
                 AuditLog.builder()
                         .action(AuditLogAction.ADD_CLIENT_RULE)

@@ -9,6 +9,7 @@ export interface NftRule {
   dstIp: string;
   protocol: string;
   dstPort: number;
+  response: string;
 }
 
 

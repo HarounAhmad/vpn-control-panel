@@ -37,7 +37,8 @@ public class NftRuleIO {
                             matcher.group("srcIp"),
                             matcher.group("dstIp"),
                             matcher.group("proto"),
-                            Integer.parseInt(matcher.group("port"))
+                            Integer.parseInt(matcher.group("port")),
+                            ""
                     ));
                 }
             }
@@ -123,16 +124,26 @@ public class NftRuleIO {
         writeRules(path, existing);
     }
 
-    public void reloadFirewall() {
+    public String reloadFirewall() {
         try {
             Process p = new ProcessBuilder("nft", "-f", firewallProperties.getNftConfigFile())
                     .inheritIO()
                     .start();
-            if (p.waitFor() != 0) {
-                throw new RuntimeException("nft reload failed with code " + p.exitValue());
+            int exitCode = p.waitFor();
+            if (exitCode != 0) {
+                // log warning instead of throwing
+                System.err.println("WARNING: nft reload failed with code " + exitCode);
+                return "WARNING: nft reload failed with code";
+            } else {
+                return "SUCCESS: Successfully Reloaded firewall";
             }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Failed to reload nftables", e);
+        } catch (IOException e) {
+            System.err.println("WARNING: nft command not found or IO error: " + e.getMessage());
+            return "WARNING: nft command not found or IO error: " + e.getMessage();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("WARNING: nft reload was interrupted");
+            return "WARNING: nft reload was interrupted";
         }
     }
 }
