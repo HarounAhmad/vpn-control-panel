@@ -2,9 +2,7 @@ package io.erisdev.vpncontrolpanelbackend.vpn.util;
 
 import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.ClientStatus;
-import io.erisdev.vpncontrolpanelbackend.repository.ClientStatusRepository;
 import io.erisdev.vpncontrolpanelbackend.service.ClientStatusService;
-import io.erisdev.vpncontrolpanelbackend.vpn.StatusReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @Component
 public class StatusPoller {
-    private final StatusReader statusReader;
+    private final StatusSource statusSource;
     private final VpnProperties cfg;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final ClientStatusService clientStatusService;
@@ -30,7 +28,7 @@ public class StatusPoller {
         }
         try {
             log.info("Starting status poll");
-            List<ClientStatus> clientStatusList = statusReader.getStatus();
+            List<ClientStatus> clientStatusList = statusSource.read();
             clientStatusService.upsertAll(clientStatusList);
             log.info("Status poll completed successfully");
         } catch (Exception e) {

@@ -13,11 +13,11 @@
       <span class="value mono">{{ clientStatus.vpnIp }}</span>
     </div>
     <div class="label-value">
-      <span class="label">Bytes In</span>
+      <span class="label">Data In</span>
       <span class="value num">{{ clientStatus.bytesIn | bytes }}</span>
     </div>
     <div class="label-value">
-      <span class="label">Bytes Out</span>
+      <span class="label">Data Out</span>
       <span class="value num">{{ clientStatus.bytesOut | bytes }}</span>
     </div>
     <div class="label-value">
@@ -30,14 +30,15 @@
     </div>
     <div class="label-value">
       <span class="label">Status</span>
-      <span class="value"><p-badge value="Active" severity="success"></p-badge></span>
+      <span class="value">
+        <p-badge *ngIf="clientStatus.status === null" [value]="'ONLINE'" severity="success"></p-badge>
+        <p-badge *ngIf="clientStatus.status === 'OFFLINE'" [value]="clientStatus.status" severity="danger"></p-badge>
+      </span>
     </div>
   </div>
 
   <ng-template pTemplate="footer">
     <div class="flex gap-2 justify-content-end">
-      <button pButton label="Kick" icon="pi pi-times" class="p-button-danger"
-              (click)="kick(clientStatus.cn)"></button>
       <button pButton label="Refresh" icon="pi pi-refresh" (click)="reload()"></button>
     </div>
   </ng-template>

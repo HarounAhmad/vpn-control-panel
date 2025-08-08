@@ -36,11 +36,13 @@ vpn:
     status-path: /var/lib/openvpn/clients.json
     socket-path: /var/run/openvpn/agent.sock
     status-interval: 5
-    host: 10.8.0.1
-    port: 22
+    status-mode: ssh # or 'file'
     ssh:
       user: vpnapp
       password: Didi1234
+      host: 10.8.0.1
+      port: 22
+
 
 
 

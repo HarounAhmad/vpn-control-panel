@@ -47,9 +47,8 @@ public class VpnProperties {
         private String statusPath;
         private String socketPath;
         private int statusInterval;
-        private String host;
-        private int port;
         private Ssh ssh;
+        private String statusMode;
     }
 
     @Getter
@@ -57,5 +56,7 @@ public class VpnProperties {
     public static class Ssh {
         private String user;
         private String password;
+        private String host;
+        private int port;
     }
 }

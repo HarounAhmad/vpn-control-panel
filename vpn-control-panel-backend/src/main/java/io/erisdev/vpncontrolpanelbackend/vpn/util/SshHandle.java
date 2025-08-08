@@ -15,7 +15,7 @@ public final class SshHandle implements Closeable {
     public static SshHandle connect(VpnProperties vpnProperties)  throws Exception {
         SSHClient ssh = new SSHClient();
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
-        ssh.connect(vpnProperties.getAgent().getHost(), vpnProperties.getAgent().getPort());
+        ssh.connect(vpnProperties.getAgent().getSsh().getHost(), vpnProperties.getAgent().getSsh().getPort());
         ssh.authPassword(vpnProperties.getAgent().getSsh().getUser(), vpnProperties.getAgent().getSsh().getPassword());
         return new SshHandle(ssh);
     }

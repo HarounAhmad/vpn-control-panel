@@ -95,7 +95,7 @@ public class AuditContext {
     public Map<String, String> downloadDetails(String fileName, HttpServletRequest request) {
         return Map.of(
                 "file", fileName,
-                "ip", getClientIp(request)
+                "ip", request == null ? "Unknown" : getClientIp(request)
         );
     }
 

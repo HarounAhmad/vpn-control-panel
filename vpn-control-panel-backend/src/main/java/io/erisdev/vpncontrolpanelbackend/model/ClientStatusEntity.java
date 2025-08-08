@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "client_status")
 @Builder
 @Data
-public class ClientStatusDatabaseEntity {
+public class ClientStatusEntity {
 
     @Id
     private String cn;

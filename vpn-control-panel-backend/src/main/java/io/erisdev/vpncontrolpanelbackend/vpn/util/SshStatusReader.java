@@ -1,28 +1,32 @@
-package io.erisdev.vpncontrolpanelbackend.vpn;
+package io.erisdev.vpncontrolpanelbackend.vpn.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.ClientStatus;
-import io.erisdev.vpncontrolpanelbackend.rest.dto.ClientStatusDto;
-import io.erisdev.vpncontrolpanelbackend.vpn.util.SshHandle;
 import lombok.RequiredArgsConstructor;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.SFTPClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RequiredArgsConstructor
 @Component
-public class StatusReader {
+@ConditionalOnProperty(name = "vpn.agent.status-mode", havingValue = "ssh", matchIfMissing = true)
+public class SshStatusReader implements StatusSource {
 
     private final VpnProperties vpnProperties;
     private static final ObjectMapper M = new ObjectMapper();
+
+    @Override
+    public List<ClientStatus> read() {
+        return this.getStatus();
+    }
 
     public List<ClientStatus> getStatus() {
         try (SshHandle h = SshHandle.connect(vpnProperties)) {

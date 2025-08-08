@@ -7,7 +7,7 @@ import {TableModule} from "primeng/table";
 import {Badge} from "primeng/badge";
 import {ButtonDirective} from "primeng/button";
 import {BytesPipe} from "../../../pipes/bytes.pipe";
-import {DatePipe} from "@angular/common";
+import {DatePipe, NgIf} from "@angular/common";
 import {ClientStatusService} from "../../../service/client-status.service";
 
 @Component({
@@ -20,7 +20,8 @@ import {ClientStatusService} from "../../../service/client-status.service";
     Badge,
     ButtonDirective,
     BytesPipe,
-    DatePipe
+    DatePipe,
+    NgIf
   ],
   templateUrl: './client-status.component.html',
   standalone: true,
@@ -28,7 +29,13 @@ import {ClientStatusService} from "../../../service/client-status.service";
 })
 export class ClientStatusComponent implements OnInit{
 
-  @Input() clientCn: string = '';
+  @Input()
+  set clientCn(value: string) {
+    this._clientCnValue = value;
+    this.reload()
+  }
+
+  private _clientCnValue!: string;
   clientStatus: ClientStatus = new ClientStatus();
 
   constructor(
@@ -58,11 +65,13 @@ export class ClientStatusComponent implements OnInit{
   }
 
   reload() {
-    if (this.clientCn) {
-      this.clientStatusService.getByCn(this.clientCn).subscribe(status => {
-        console.log("STATUS: " + status)
+    if (this._clientCnValue) {
+      this.clientStatusService.getByCn(this._clientCnValue).subscribe(status => {
         this.clientStatus = status;
       });
     }
   }
+
+
+
 }
