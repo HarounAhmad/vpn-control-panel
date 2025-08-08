@@ -2,7 +2,6 @@ package io.erisdev.vpncontrolpanelbackend.service;
 
 import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.*;
-import io.erisdev.vpncontrolpanelbackend.repository.AuditLogRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.CCDRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.ClientConfigRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.VpnClientRepository;

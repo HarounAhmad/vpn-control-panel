@@ -1,0 +1,44 @@
+<p-card header="{{clientStatus.cn}} — Status" styleClass="mb-3">
+  <div class="p-fluid">
+    <div class="label-value">
+      <span class="label">Common Name</span>
+      <span class="value">{{ clientStatus.cn }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Real IP</span>
+      <span class="value mono">{{ clientStatus.realIp }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">VPN IP</span>
+      <span class="value mono">{{ clientStatus.vpnIp }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Bytes In</span>
+      <span class="value num">{{ clientStatus.bytesIn | bytes }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Bytes Out</span>
+      <span class="value num">{{ clientStatus.bytesOut | bytes }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Connected Since</span>
+      <span class="value">{{ clientStatus.connectedSince | date:'yyyy-MM-dd HH:mm:ss':'Europe/Zurich' }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Session Age</span>
+      <span class="value num">{{ sessionAge }}</span>
+    </div>
+    <div class="label-value">
+      <span class="label">Status</span>
+      <span class="value"><p-badge value="Active" severity="success"></p-badge></span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2 justify-content-end">
+      <button pButton label="Kick" icon="pi pi-times" class="p-button-danger"
+              (click)="kick(clientStatus.cn)"></button>
+      <button pButton label="Refresh" icon="pi pi-refresh" (click)="reload()"></button>
+    </div>
+  </ng-template>
+</p-card>

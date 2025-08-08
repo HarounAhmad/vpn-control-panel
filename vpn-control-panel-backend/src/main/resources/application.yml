@@ -7,7 +7,7 @@ spring:
     password: password
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -31,7 +31,28 @@ vpn:
       start: 10.8.0.10
       end: 10.8.0.19
     subnet: 255.255.255.0
+  agent:
+    enabled: true
+    status-path: /var/lib/openvpn/clients.json
+    socket-path: /var/run/openvpn/agent.sock
+    status-interval: 5
+    host: 10.8.0.1
+    port: 22
+    ssh:
+      user: vpnapp
+      password: Didi1234
+
+
 
 certificate:
   operations:
     allowed: true
+
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+        web:
+          filterChainProxy: TRACE

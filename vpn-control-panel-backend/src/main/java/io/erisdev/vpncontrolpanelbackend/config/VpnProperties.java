@@ -13,6 +13,7 @@ public class VpnProperties {
 
     private final Guest guest = new Guest();
     private final Admin admin = new Admin();
+    private final agent agent = new agent();
     private String defaultDestination;
     private String ccdDirectory;
     private String server;
@@ -37,5 +38,24 @@ public class VpnProperties {
     public static class IpRange {
         private String start;
         private String end;
+    }
+
+    @Setter
+    @Getter
+    public static class agent {
+        private Boolean enabled;
+        private String statusPath;
+        private String socketPath;
+        private int statusInterval;
+        private String host;
+        private int port;
+        private Ssh ssh;
+    }
+
+    @Getter
+    @Setter
+    public static class Ssh {
+        private String user;
+        private String password;
     }
 }
