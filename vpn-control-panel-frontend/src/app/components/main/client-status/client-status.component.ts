@@ -60,9 +60,6 @@ export class ClientStatusComponent implements OnInit{
     return h > 0 ? `${h}h ${m}m` : `${m}m ${ss}s`;
   }
 
-  kick(cn: any) {
-
-  }
 
   reload() {
     if (this._clientCnValue) {

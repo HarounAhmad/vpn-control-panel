@@ -39,7 +39,7 @@ vpn:
     status-mode: ssh # or 'file'
     ssh:
       user: vpnapp
-      password: Didi1234
+      password: ${VPN_AGENT_SSH_PASSWORD}
       host: 10.8.0.1
       port: 22
 
