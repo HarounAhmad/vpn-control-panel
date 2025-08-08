@@ -6,6 +6,8 @@ import {VpnClient, VpnClientService} from "../../../service/vpn-client.service";
 import {TableModule} from "primeng/table";
 import {Router} from "@angular/router";
 import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
+import {ClientStatusComponent} from "../client-status/client-status.component";
 
 @Component({
   selector: 'app-client-selector',
@@ -15,7 +17,13 @@ import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
     ClientRulesComponent,
     TableModule,
     TitleBarComponent,
-    NgIf
+    NgIf,
+    Tabs,
+    Tab,
+    TabList,
+    TabPanels,
+    TabPanel,
+    ClientStatusComponent
   ],
   templateUrl: './client-selector.component.html',
   standalone: true,

@@ -24,6 +24,29 @@
   </div>
 
   <div style="width: 67%;">
-    <app-client-rules *ngIf="selectedClient" [clientCn]="selectedClient.cn"></app-client-rules>
+    <p-tabs value="0" *ngIf="selectedClient">
+      <p-tablist>
+        <p-tab value="0">
+          Client Rules
+        </p-tab>
+        <p-tab value="1">
+          Client Status
+        </p-tab>
+        <p-tab value="2">
+          Client Commands
+        </p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <p-tabpanel value="0">
+            <app-client-rules  [clientCn]="selectedClient.cn"></app-client-rules>
+        </p-tabpanel>
+        <p-tabpanel value="1">
+            <app-client-status [clientCn]="selectedClient.cn"></app-client-status>
+        </p-tabpanel>
+        <p-tabpanel value="2">
+
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
   </div>
 </div>
