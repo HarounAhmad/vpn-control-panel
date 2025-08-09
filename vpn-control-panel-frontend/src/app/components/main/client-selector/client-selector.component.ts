@@ -8,6 +8,7 @@ import {Router} from "@angular/router";
 import {TitleBarComponent} from "../blocks/title-bar/title-bar.component";
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
 import {ClientStatusComponent} from "../client-status/client-status.component";
+import {ClientFilesComponent} from "../client-files/client-files.component";
 
 @Component({
   selector: 'app-client-selector',
@@ -23,7 +24,8 @@ import {ClientStatusComponent} from "../client-status/client-status.component";
     TabList,
     TabPanels,
     TabPanel,
-    ClientStatusComponent
+    ClientStatusComponent,
+    ClientFilesComponent
   ],
   templateUrl: './client-selector.component.html',
   standalone: true,

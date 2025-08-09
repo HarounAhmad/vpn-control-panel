@@ -1,7 +1,7 @@
 <app-title-bar [title]="'Clients'"></app-title-bar>
 
 <div style="display: flex; width: 100%;">
-  <div style="width: 33%;">
+  <div style="width: 10%;">
     <p-table
       [columns]="columns"
       selectionMode="single"
@@ -23,7 +23,7 @@
     </p-table>
   </div>
 
-  <div style="width: 67%;">
+  <div style="width: 90%;">
     <p-tabs value="0" *ngIf="selectedClient">
       <p-tablist>
         <p-tab value="0">
@@ -33,7 +33,7 @@
           Client Status
         </p-tab>
         <p-tab value="2">
-          Client Commands
+          Client Files
         </p-tab>
       </p-tablist>
       <p-tabpanels>
@@ -44,7 +44,7 @@
             <app-client-status [clientCn]="selectedClient.cn"></app-client-status>
         </p-tabpanel>
         <p-tabpanel value="2">
-
+            <app-client-files [clientCn]="selectedClient.cn"></app-client-files>
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

@@ -48,7 +48,13 @@ vpn:
 
 certificate:
   operations:
-    allowed: true
+    enabled: true
+    operations:
+      enable-generation: true # enable generation server-side (insecure but easy)
+      enable-revocation: true # enable revocation server-side (insecure but easy)
+      enable-upload: true # enable upload of certificates (insecure but easy)
+      enable-download: true
+
 
 
 logging:
