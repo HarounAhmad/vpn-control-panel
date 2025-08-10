@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class ClientStatusService {
                 .connectedSinceEpoch(entity.getConnectedSinceEpoch())
                 .connectedSince(entity.getConnectedSince())
                 .status(entity.getStatus())
+                .lastSeen(entity.getLastSeen())
                 .build();
     }
 
@@ -75,8 +77,40 @@ public class ClientStatusService {
             e.setStatus(s.getStatus());
             toSave.add(e);
         }
+        List<ClientStatusEntity> activeClients = checkActive(toSave);
 
-        repo.saveAll(toSave);
+        repo.saveAll(activeClients);
+    }
+
+    @Transactional
+    protected List<ClientStatusEntity> checkActive(List<ClientStatusEntity> incoming) {
+        var online = incoming.stream()
+                .map(c -> normalize(c.getCn()))
+                .filter(s -> s != null && !s.isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
+
+        var clients = repo.findAll();
+
+        for (var client : clients) {
+            var cn = normalize(client.getCn());
+            boolean found = cn != null && online.contains(cn);
+
+            if (found) {
+                client.setStatus("ONLINE");
+                client.setLastSeen(java.time.Instant.now().toString());
+            } else {
+                client.setStatus("OFFLINE");
+                if (client.getLastSeen() == null) {
+                    client.setLastSeen(java.time.Instant.now().toString());
+                }
+            }
+        }
+
+        return clients;
+    }
+
+    private static String normalize(String s) {
+        return s == null ? null : s.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
 }

@@ -21,8 +21,8 @@
       <span class="value num">{{ clientStatus.bytesOut | bytes }}</span>
     </div>
     <div class="label-value">
-      <span class="label">Connected Since</span>
-      <span class="value">{{ clientStatus.connectedSince | date:'yyyy-MM-dd HH:mm:ss':'Europe/Zurich' }}</span>
+      <span class="label">{{clientStatus.status === 'ONLINE' ? 'Connected Since' : 'last Seen'}}</span>
+      <span class="value">{{ clientStatus.status === 'ONLINE' ? clientStatus.connectedSince : clientStatus.lastSeen | date:'yyyy-MM-dd HH:mm:ss':'Europe/Zurich' }}</span>
     </div>
     <div class="label-value">
       <span class="label">Session Age</span>
@@ -31,7 +31,7 @@
     <div class="label-value">
       <span class="label">Status</span>
       <span class="value">
-        <p-badge *ngIf="clientStatus.status === null" [value]="'ONLINE'" severity="success"></p-badge>
+        <p-badge *ngIf="clientStatus.status === 'ONLINE'" [value]="'ONLINE'" severity="success"></p-badge>
         <p-badge *ngIf="clientStatus.status === 'OFFLINE'" [value]="clientStatus.status" severity="danger"></p-badge>
       </span>
     </div>

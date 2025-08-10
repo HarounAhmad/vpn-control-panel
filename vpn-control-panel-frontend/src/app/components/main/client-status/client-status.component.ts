@@ -51,13 +51,17 @@ export class ClientStatusComponent implements OnInit{
 
   get sessionAge(): string {
     if (!this.clientStatus?.connectedSince) return '-';
-    const d = new Date(this.clientStatus.connectedSince);
-    const ms = Date.now() - d.getTime();
-    const s = Math.floor(ms / 1000);
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const ss = s % 60;
-    return h > 0 ? `${h}h ${m}m` : `${m}m ${ss}s`;
+    if (this.clientStatus.status === "ONLINE") {
+      const d = new Date(this.clientStatus.connectedSince);
+      const ms = Date.now() - d.getTime();
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const ss = s % 60;
+      return h > 0 ? `${h}h ${m}m` : `${m}m ${ss}s`;
+    } else {
+      return '-';
+    }
   }
 
 

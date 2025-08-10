@@ -54,7 +54,7 @@ export class ClientFilesComponent {
        this.alertService.successSelfClosing('Client config retrieved successfully', filename);
      },
      error: (error) => {
-       this.alertService.error('Error downloading client config', error.message);
+       this.alertService.error('Error downloading client config', error.usermessage);
 
      }
    });

@@ -6,4 +6,5 @@ export class ClientStatus {
   bytesOut: number = 0;
   connectedSince: Date = new Date();
   status: string = '';
+  lastSeen: Date = new Date();
 }

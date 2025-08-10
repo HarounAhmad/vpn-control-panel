@@ -19,6 +19,7 @@ public class ClientStatusDto {
     private long bytesOut;
     private long connectedSinceEpoch;
     private String connectedSince;
+    private String lastSeen;
     private String status;
 
 }
