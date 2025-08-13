@@ -1,10 +1,12 @@
 package io.erisdev.vpncontrolpanelbackend.service;
 
+import io.erisdev.vpncontrolpanelbackend.certificate.CertdService;
 import io.erisdev.vpncontrolpanelbackend.config.VpnProperties;
 import io.erisdev.vpncontrolpanelbackend.model.*;
 import io.erisdev.vpncontrolpanelbackend.repository.CCDRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.ClientConfigRepository;
 import io.erisdev.vpncontrolpanelbackend.repository.VpnClientRepository;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.CertdHealthDto;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.IpRangeDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientResponseDTO;
@@ -44,6 +46,7 @@ public class VpnClientService {
 
     private final AuditLogService auditLogService;
     private final AuditContext auditContext;
+    private final CertdService certdService;
 
     public List<VpnClient> findAll() {
         return vpnClientRepository.findAll();
@@ -219,4 +222,13 @@ public class VpnClientService {
     public String getConfig() {
         return "ClientConfigGenerator.generateConfig()";
     }
+
+    public CertdHealthDto getCertdStatus() {
+        var hlth = certdService.health();
+        var resp = new CertdHealthDto();
+        resp.setSerial(hlth.getSerial());
+        resp.setNotAfter(hlth.getNotAfter());
+        return resp;
+    }
+
 }

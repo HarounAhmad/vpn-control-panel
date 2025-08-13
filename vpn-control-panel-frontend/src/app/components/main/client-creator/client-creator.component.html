@@ -4,6 +4,7 @@
 
 <div style="width: 33%;">
 <p-card class="mb-4">
+
   <ng-template #title>Create Client</ng-template>
   <ng-template #subtitle>
     Fill in the details to create a new client <br>
@@ -108,6 +109,13 @@
   </div>
 
 
+  <div class="label-value">
+    <span class="label">Certificate Agent</span>
+    <span class="value">
+        <p-badge *ngIf="certDHealth.serial === 'ok'" [value]="'ONLINE'" severity="success"></p-badge>
+        <p-badge *ngIf="certDHealth.serial !== 'ok'" [value]="certDHealth.serial" severity="danger"></p-badge>
+      </span>
+  </div>
 
   <ng-template #footer>
     <div class="flex gap-4 mt-1">

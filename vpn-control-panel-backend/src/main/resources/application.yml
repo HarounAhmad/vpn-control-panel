@@ -49,11 +49,18 @@ vpn:
 certificate:
   operations:
     enabled: true
-    operations:
-      enable-generation: true # enable generation server-side (insecure but easy)
-      enable-revocation: true # enable revocation server-side (insecure but easy)
-      enable-upload: true # enable upload of certificates (insecure but easy)
-      enable-download: true
+    enable-generation: true # enable generation server-side (insecure but easy)
+    enable-revocation: true # enable revocation server-side (insecure but easy)
+    enable-upload: true # enable upload of certificates (insecure but easy)
+    enable-download: true
+    use-ssh: true # use SSH for certificate operations if false it directly uses the socket from the agent
+    socket:
+      path: /home/haroun/workspace/security/vpn-certd/dist/run/vpn-certd.sock
+      ssh:
+        host: 10.8.0.1
+        port: 22
+        user: certificate-agent
+        password: ${CERTIFICATE_AGENT_SSH_PASSWORD}
 
 
 

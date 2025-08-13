@@ -14,6 +14,7 @@ import {InputNumber} from "primeng/inputnumber";
 import { HttpResponse } from '@angular/common/http';
 import {DropdownModule} from "primeng/dropdown";
 import {AlertsService} from "../../../service/util/alerts.service";
+import {Badge} from "primeng/badge";
 
 
 export interface Client {
@@ -41,7 +42,8 @@ export interface Client {
     NgIf,
     SelectButton,
     InputNumber,
-    DropdownModule
+    DropdownModule,
+    Badge
   ],
   templateUrl: './client-creator.component.html',
   standalone: true,
@@ -80,7 +82,7 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
   osOptions: { label: string; value: string }[] = []
 
   selectedOs: string = 'WINDOWS';
-
+  certDHealth: any;
   ngOnInit() {
     this.clientService.getIpRanges().subscribe((data: any) => {
         this.ranges = [...data]
@@ -100,6 +102,9 @@ export class ClientCreatorComponent implements OnInit, AfterViewInit{
         { label: 'Linux', value: 'LINUX' },
       ];
     });
+    this.clientService.getCertdHealth().subscribe((response: any) => {
+        this.certDHealth = response;
+      });
   }
 
   ngAfterViewInit() {

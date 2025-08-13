@@ -1,0 +1,17 @@
+.label-value {
+  display: flex;
+  align-items: center;
+  margin-bottom: .5rem;
+
+  .label {
+    flex: 0 0 180px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+  }
+
+  .value {
+    flex: 1;
+    font-weight: 400;
+    color: var(--text-color-primary);
+  }
+}

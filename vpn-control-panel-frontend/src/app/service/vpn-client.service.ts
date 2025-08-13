@@ -49,4 +49,8 @@ export class VpnClientService {
       withCredentials: true
       });
   }
+
+  getCertdHealth(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/certd/health`, { withCredentials: true });
+  }
 }

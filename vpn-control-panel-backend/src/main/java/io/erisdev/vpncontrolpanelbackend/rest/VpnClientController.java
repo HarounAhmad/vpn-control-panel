@@ -1,6 +1,7 @@
 package io.erisdev.vpncontrolpanelbackend.rest;
 
 import io.erisdev.vpncontrolpanelbackend.model.VpnClient;
+import io.erisdev.vpncontrolpanelbackend.rest.dto.CertdHealthDto;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.IpRangeDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientDTO;
 import io.erisdev.vpncontrolpanelbackend.rest.dto.VpnClientResponseDTO;
@@ -78,6 +79,11 @@ public class VpnClientController {
     @GetMapping("/ranges")
     public ResponseEntity<Set<IpRangeDTO>> getIpRange() {
         return ResponseEntity.ok(service.getIpRange());
+    }
+
+    @GetMapping("/certd/health")
+    public ResponseEntity<CertdHealthDto> certdHealth() {
+        return ResponseEntity.ok(service.getCertdStatus());
     }
 
 }
